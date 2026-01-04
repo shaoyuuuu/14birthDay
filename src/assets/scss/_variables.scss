@@ -1,0 +1,74 @@
+// 颜色变量
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$typewriter-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+$timeline-bg: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+$modal-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+
+$primary-color: #667eea;
+$secondary-color: #764ba2;
+$accent-color: #f5576c;
+$text-primary: #333;
+$text-secondary: #666;
+$text-light: #fff;
+$background-light: rgba(255, 255, 255, 0.95);
+
+// 字体变量
+$font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+$font-size-xs: 0.9rem;
+$font-size-sm: 1rem;
+$font-size-md: 1.1rem;
+$font-size-lg: 1.2rem;
+$font-size-xl: 1.5rem;
+$font-size-2xl: 2rem;
+$font-size-3xl: 2.5rem;
+$font-size-4xl: 3rem;
+
+// 间距变量
+$spacing-xs: 5px;
+$spacing-sm: 10px;
+$spacing-md: 15px;
+$spacing-lg: 20px;
+$spacing-xl: 30px;
+$spacing-2xl: 40px;
+$spacing-3xl: 60px;
+
+// 圆角变量
+$border-radius-sm: 2px;
+$border-radius-md: 4px;
+$border-radius-lg: 10px;
+$border-radius-xl: 15px;
+$border-radius-2xl: 20px;
+$border-radius-full: 50px;
+
+// 阴影变量
+$shadow-sm: 0 5px 15px rgba(0, 0, 0, 0.1);
+$shadow-md: 0 8px 25px rgba(0, 0, 0, 0.2);
+$shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
+$shadow-2xl: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+// 动画变量
+$transition-fast: 0.3s ease;
+$transition-normal: 0.6s ease;
+$transition-slow: 1s ease;
+
+// 打字机速度变量
+$typewriter-speed: 100ms;
+$typewriter-delete-speed: 50ms;
+$typewriter-delay: 1500ms;
+
+// 响应式断点
+$breakpoint-sm: 480px;
+$breakpoint-md: 768px;
+$breakpoint-lg: 1024px;
+$breakpoint-xl: 1200px;
+
+// 火柴人进度条变量
+$stick-figure-size: 50px;
+$progress-track-height: 4px;
+$progress-track-color: rgba(255, 255, 255, 0.3);
+
+// 缩略图变量
+$thumbnail-size: 80px;
+$thumbnail-gap: 10px;
+$thumbnail-active-border: 3px solid white;
