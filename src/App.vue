@@ -8,10 +8,8 @@
 
     <!-- 时间轴回忆界面 - 点击开始回忆后显示 -->
     <section id="timeline-section" class="section" v-if="currentSection === 'timeline'">
-      <!-- 动态背景组件 - 只在回忆页面显示 -->
-      <DynamicBackground :speed="0.2" :petalCount="20" />
-      <!-- 回忆卡片组件 -->
-      <Timeline />
+      <!-- 回忆页面组件 - 整合动态背景和时间轴 -->
+      <MemoryPage />
     </section>
   </div>
 </template>
@@ -27,8 +25,7 @@ import { ref } from 'vue'
 
 // 引入项目组件
 import Typewriter from './components/Typewriter.vue' // 打字机特效组件
-import Timeline from './components/Timeline.vue' // 回忆卡片滑动组件
-import DynamicBackground from './components/DynamicBackground.vue' // 动态背景组件
+import MemoryPage from './components/MemoryPage.vue' // 回忆页面组件
 
 // 响应式数据定义
 const currentSection = ref('typewriter') // 当前显示的界面：'typewriter' 或 'timeline'
