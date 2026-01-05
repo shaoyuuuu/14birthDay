@@ -2,8 +2,21 @@
     <div class="memory-page-container">
         <!-- 动态背景组件 -->
         <DynamicBackground :speed="speed" :petalCount="petalCount" />
+
+        <!-- 加载状态 -->
+        <div v-if="isLoading" class="loading-container">
+            <div class="loading-spinner"></div>
+            <p>正在加载回忆...</p>
+        </div>
+
+        <!-- 错误状态 -->
+        <div v-else-if="error" class="error-container">
+            <p>加载回忆失败: {{ error.message }}</p>
+            <button @click="loadMemories">重试</button>
+        </div>
+
         <!-- 时间轴组件 -->
-        <Timeline :items="timelineItems" :autoPlay="autoPlay" :autoPlayInterval="autoPlayInterval"
+        <Timeline v-else :items="timelineItems" :autoPlay="autoPlay" :autoPlayInterval="autoPlayInterval"
             @timeline-complete="handleTimelineComplete" />
     </div>
 </template>
@@ -21,22 +34,13 @@ import { ref } from 'vue'
 import DynamicBackground from './DynamicBackground.vue'
 import Timeline from './Timeline.vue'
 
+// 引入回忆加载组合式函数
+import useMemoryLoader from '../composables/useMemoryLoader'
+
 /**
  * 定义组件属性
  */
 const props = defineProps({
-    /**
-     * 时间轴项目数组
-     */
-    timelineItems: {
-        type: Array,
-        default: () => [
-            { date: '2023-01-15', title: '第一次相遇', description: '那天的阳光很好，你穿着白色的裙子，我知道，我的心被你偷走了。', images: ['https://picsum.photos/id/1027/600/800', 'https://picsum.photos/id/1035/600/800', 'https://picsum.photos/id/1040/600/800'], memory: '还记得在图书馆的转角，你低头看书的样子，那一刻时间仿佛静止了。' },
-            { date: '2023-02-14', title: '情人节告白', description: '鼓起勇气向你表白，谢谢你给了我这个机会，让我能够陪伴在你身边。', images: ['https://picsum.photos/id/1035/600/800', 'https://picsum.photos/id/1069/600/800'], memory: '在咖啡厅里，我紧张得手都在抖，但看到你微笑的那一刻，一切都值得了。' },
-            { date: '2023-06-01', title: '一起过六一', description: '像孩子一样一起吃冰淇淋，逛游乐园，那是我最快乐的一天。', images: ['https://picsum.photos/id/1040/800/600', 'https://picsum.photos/id/1050/600/800', 'https://picsum.photos/id/1060/800/600'], memory: '旋转木马上的你笑得那么开心，我多么希望时间能永远停留在那一刻。' },
-            { date: '2023-12-30', title: '你的生日', description: '今天是你的生日，我想对你说，谢谢你出现在我的生命里，我爱你。', images: ['https://picsum.photos/id/1069/600/800', 'https://picsum.photos/id/1070/800/600'], memory: '这一年有你陪伴，每一天都充满了幸福和温暖，祝你生日快乐，我的宝贝。' }
-        ]
-    },
     /**
      * 樱花飘落速度
      */
@@ -68,6 +72,11 @@ const props = defineProps({
 })
 
 /**
+ * 使用回忆加载组合式函数
+ */
+const { timelineItems, isLoading, error, loadMemories } = useMemoryLoader()
+
+/**
  * 定义组件事件
  */
 const emit = defineEmits([
@@ -85,8 +94,88 @@ const handleTimelineComplete = () => {
 <style lang="scss" scoped>
 .memory-page-container {
     width: 100%;
-    height: 100vh;
-    overflow: hidden;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    padding-bottom: 80px;
+}
+
+/* 确保DynamicBackground组件能撑满容器高度 */
+.memory-page-container>.DynamicBackground {
+    width: 100%;
+    height: 100%;
+    min-height: calc(100vh - 80px);
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: -1;
+}
+
+/* 让Timeline组件保持其内部的flex布局 */
+.memory-page-container>.Timeline {
+    width: 100%;
+    flex: 1;
+}
+
+/* 加载状态样式 */
+.loading-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 10;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top: 4px solid white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* 错误状态样式 */
+.error-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: white;
+    z-index: 10;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 20px;
+    border-radius: 8px;
+}
+
+.error-container button {
+    background: white;
+    color: #667eea;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.error-container button:hover {
+    background: #f0f0f0;
 }
 </style>

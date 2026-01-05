@@ -463,16 +463,26 @@ $shadow-color: rgba(0, 0, 0, 0.2); // 阴影颜色
   overflow: hidden;
 }
 
-/* 进度轨道 */
+/* 进度轨道 - 公路样式 */
 .progress-track {
   position: absolute;
   bottom: 0;
   left: 0;
   width: 100%;
   height: $progress-track-height;
-  background: $progress-track-color;
+  background: #1a1a1a; /* 公路黑色底色 */
   border-radius: $border-radius-sm;
   z-index: 0;
+  /* 创建公路分隔线效果 */
+  background-image: 
+    linear-gradient(90deg, #ffffff 0%, #ffffff 2%, transparent 2%, transparent 98%, #ffffff 98%, #ffffff 100%),
+    linear-gradient(90deg, #ffd700 0%, #ffd700 4%, transparent 4%, transparent 96%, #ffd700 96%, #ffd700 100%),
+    linear-gradient(90deg, transparent 0%, transparent 50%, #ffd700 50%, #ffd700 52%, transparent 52%, transparent 100%);
+  background-size: 
+    100% 100%,
+    100% 100%,
+    40px 100%;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
 }
 
 /* 火柴人基础样式 */
