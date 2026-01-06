@@ -99,7 +99,30 @@ const handleTimelineComplete = () => {
     flex-direction: column;
     overflow-x: hidden;
     overflow-y: hidden;
-    padding-bottom: 80px;
+    /* 添加复古纹理背景 */
+    background:
+        linear-gradient(135deg,
+            rgba(255, 220, 180, 0.15) 0%,
+            rgba(200, 160, 120, 0.12) 50%,
+            rgba(100, 80, 60, 0.18) 100%),
+        repeating-linear-gradient(45deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 0, 0, 0.01) 2px,
+            rgba(0, 0, 0, 0.01) 4px);
+
+    /* 添加微妙的噪点纹理 */
+    &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+        pointer-events: none;
+        z-index: 1;
+    }
 }
 
 /* 确保DynamicBackground组件能撑满容器高度 */
@@ -111,6 +134,8 @@ const handleTimelineComplete = () => {
     top: 0;
     left: 0;
     z-index: -1;
+    /* 添加怀旧色调滤镜 */
+    filter: sepia(0.15) saturate(0.9) brightness(1.05) contrast(0.95);
 }
 
 /* 让Timeline组件保持其内部的flex布局 */

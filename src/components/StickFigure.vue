@@ -1,7 +1,6 @@
 <template>
   <div class="stick-figure-container" :style="containerStyle">
-    <!-- 进度轨道 -->
-    <div class="progress-track"></div>
+
 
     <!-- 火柴人1（前方拉人的） -->
     <div ref="frontFigure" class="stick-figure front" :style="frontFigureStyle">
@@ -16,6 +15,12 @@
         <div ref="frontLeftLeg" class="leg left" :style="frontLeftLegStyle"></div>
         <!-- 右腿 -->
         <div ref="frontRightLeg" class="leg right" :style="frontRightLegStyle"></div>
+      </div>
+
+      <!-- 火柴人对话框 - 前方拉人的火柴人 -->
+      <div v-if="comment && !isSliding" class="dialog-box">
+        <div class="dialog-content">{{ comment }}</div>
+        <div class="dialog-arrow"></div>
       </div>
     </div>
 
@@ -73,6 +78,20 @@ const props = defineProps({
     type: Number,
     default: 40,
     validator: (v) => v >= 20 && v <= 100
+  },
+  /**
+   * 评论内容
+   */
+  comment: {
+    type: String,
+    default: ''
+  },
+  /**
+   * 是否正在滑动
+   */
+  isSliding: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -101,7 +120,7 @@ let rearRunningTimeline = null
 
 // 容器样式
 const containerStyle = computed(() => ({
-  height: `${props.size + 40}px`
+  height: `100%`
 }))
 
 // 头像样式
@@ -384,20 +403,26 @@ const createRearRunningTimeline = () => {
 
 // 更新火柴人位置（使用固定百分比间距，确保在所有设备上一致）
 const updateStickFigurePositions = () => {
-  const maxFrontPos = 95 // 前方最大位置（避免超出可视区域）
+  const dialogBoxWidthPx = 60 // 对话框固定宽度
+  const containerWidth = frontFigure.value?.parentElement?.clientWidth || 1000 // 获取容器宽度（默认1000px）
+  const dialogBoxWidthPercent = (dialogBoxWidthPx / containerWidth) * 100 // 将对话框宽度转换为百分比
+  const maxFrontPos = 95 - dialogBoxWidthPercent // 前方最大位置（避免超出可视区域，减去对话框宽度）
   const fixedDistance = 5 // 使用固定百分比间距，确保在所有设备上一致
   const minTotalSpace = fixedDistance // 最小总空间需求
 
   let newFrontPos, newRearPos
 
+  // 以最大位置作为100%基准计算实际位置
+  const normalizedProgress = (props.progress / 100) * maxFrontPos
+
   // 当进度值较小时，确保两个火柴人之间有足够的间距
-  if (props.progress <= minTotalSpace) {
+  if (normalizedProgress <= minTotalSpace) {
     // 进度太小时，固定间距布局
     newFrontPos = fixedDistance
     newRearPos = 0
   } else {
     // 正常情况下按进度和间距布局
-    newFrontPos = Math.min(props.progress, maxFrontPos)
+    newFrontPos = normalizedProgress
     // 后方位置 = 前方位置 - 固定间距百分比
     newRearPos = Math.max(0, newFrontPos - fixedDistance)
   }
@@ -458,37 +483,16 @@ $shadow-color: rgba(0, 0, 0, 0.2); // 阴影颜色
   position: relative;
   width: 100%;
   min-width: 200px;
+  height: 100%;
   display: flex;
   align-items: flex-end;
   overflow: hidden;
 }
 
-/* 进度轨道 - 公路样式 */
-.progress-track {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: $progress-track-height;
-  background: #1a1a1a; /* 公路黑色底色 */
-  border-radius: $border-radius-sm;
-  z-index: 0;
-  /* 创建公路分隔线效果 */
-  background-image: 
-    linear-gradient(90deg, #ffffff 0%, #ffffff 2%, transparent 2%, transparent 98%, #ffffff 98%, #ffffff 100%),
-    linear-gradient(90deg, #ffd700 0%, #ffd700 4%, transparent 4%, transparent 96%, #ffd700 96%, #ffd700 100%),
-    linear-gradient(90deg, transparent 0%, transparent 50%, #ffd700 50%, #ffd700 52%, transparent 52%, transparent 100%);
-  background-size: 
-    100% 100%,
-    100% 100%,
-    40px 100%;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-}
-
 /* 火柴人基础样式 */
 .stick-figure {
   position: absolute;
-  bottom: $progress-track-height + 4px;
+  bottom: 4px;
   transition: transform 0.3s ease;
   pointer-events: none;
   display: flex;
@@ -602,4 +606,64 @@ $shadow-color: rgba(0, 0, 0, 0.2); // 阴影颜色
 /* ================================ */
 /* 动画由GSAP时间线控制，不再使用CSS关键帧 */
 /* ================================ */
+
+/* 对话框样式 */
+.dialog-box {
+  position: absolute;
+  top: -14px;
+  left: 100%;
+  margin-left: 10px;
+  background-color: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 5px;
+  width: 60px;
+  max-width: 60px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  color: #333;
+  line-height: 1.4;
+  z-index: 3;
+  pointer-events: none;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  word-wrap: break-word;
+  white-space: normal;
+  animation: dialogFadeIn 0.4s ease-out;
+}
+
+/* 对话框箭头 */
+.dialog-arrow {
+  position: absolute;
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-right: 6px solid rgba(255, 255, 255, 0.95);
+  z-index: 2;
+}
+
+/* 对话框淡入动画 */
+@keyframes dialogFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px) scale(0.8);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .dialog-box {
+    font-size: 10px;
+    max-width: 150px;
+    padding: 5px;
+    top: -5px;
+  }
+}
 </style>

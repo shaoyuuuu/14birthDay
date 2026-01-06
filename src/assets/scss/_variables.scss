@@ -1,51 +1,65 @@
-// 颜色变量
-$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-$typewriter-bg: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-$timeline-bg: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-$modal-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+// 颜色变量 - 绿色小清新主题
+$primary-gradient: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
+$typewriter-bg: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
+$timeline-bg: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+$modal-gradient: linear-gradient(135deg, #aed581 0%, #81c784 100%);
 
-$primary-color: #667eea;
-$secondary-color: #764ba2;
-$accent-color: #f5576c;
-$text-primary: #333;
-$text-secondary: #666;
-$text-light: #fff;
-$background-light: rgba(255, 255, 255, 0.95);
+// 主色调
+$primary-color: #66bb6a;
+$secondary-color: #81c784;
+$accent-color: #aed581;
+
+// 文字颜色 - 确保不是所有文字都是绿色
+$text-primary: #212121; // 主要文字使用深灰色
+$text-secondary: #616161; // 次要文字使用中灰色
+$text-light: #ffffff; // 浅色文字
+$text-accent: #388e3c; // 强调文字使用深绿色
+
+// 背景颜色
+$background-light: rgba(255, 255, 255, 0.98);
+$background-secondary: #f1f8e9;
+$background-accent: #e8f5e8;
+
+// 边框和阴影颜色
+$border-color: #c8e6c9;
+$shadow-color: rgba(0, 0, 0, 0.1);
+$shadow-hover: rgba(0, 0, 0, 0.15);
 
 // 字体变量
-$font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-$font-size-xs: 0.9rem;
-$font-size-sm: 1rem;
-$font-size-md: 1.1rem;
-$font-size-lg: 1.2rem;
-$font-size-xl: 1.5rem;
-$font-size-2xl: 2rem;
-$font-size-3xl: 2.5rem;
-$font-size-4xl: 3rem;
+$font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+// 使用vw单位实现响应式字体大小，确保移动端字体足够大
+$font-size-xs: max(12px, 0.8vw); // 最小12px
+$font-size-sm: max(14px, 1vw); // 最小14px
+$font-size-md: max(16px, 1.1vw); // 最小16px
+$font-size-lg: max(18px, 1.2vw); // 最小18px
+$font-size-xl: max(22px, 1.5vw); // 最小22px
+$font-size-2xl: max(28px, 2vw); // 最小28px
+$font-size-3xl: max(34px, 2.5vw); // 最小34px
+$font-size-4xl: max(40px, 3vw); // 最小40px
 
-// 间距变量
-$spacing-xs: 5px;
-$spacing-sm: 10px;
-$spacing-md: 15px;
-$spacing-lg: 20px;
-$spacing-xl: 30px;
-$spacing-2xl: 40px;
-$spacing-3xl: 60px;
+// 间距变量 - 使用vw和vh单位，保持紧凑的元素间距
+$spacing-xs: max(4px, 0.25vw); // 最小4px
+$spacing-sm: max(8px, 0.5vw); // 最小8px
+$spacing-md: max(12px, 0.8vw); // 最小12px
+$spacing-lg: max(16px, 1.2vw); // 最小16px
+$spacing-xl: max(20px, 1.5vw); // 最小20px
+$spacing-2xl: max(24px, 1.8vw); // 最小24px
+$spacing-3xl: max(30px, 2.2vw); // 最小30px
 
-// 圆角变量
-$border-radius-sm: 2px;
-$border-radius-md: 4px;
-$border-radius-lg: 10px;
-$border-radius-xl: 15px;
-$border-radius-2xl: 20px;
-$border-radius-full: 50px;
+// 圆角变量 - 使用vw单位
+$border-radius-sm: 0.2vw;
+$border-radius-md: 0.4vw;
+$border-radius-lg: 1vw;
+$border-radius-xl: 1.5vw;
+$border-radius-2xl: 2vw;
+$border-radius-full: 5vw;
 
-// 阴影变量
-$shadow-sm: 0 5px 15px rgba(0, 0, 0, 0.1);
-$shadow-md: 0 8px 25px rgba(0, 0, 0, 0.2);
-$shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.1);
-$shadow-xl: 0 20px 40px rgba(0, 0, 0, 0.15);
-$shadow-2xl: 0 20px 60px rgba(0, 0, 0, 0.3);
+// 阴影变量 - 使用vw单位
+$shadow-sm: 0 0.5vw 1.5vw rgba(0, 0, 0, 0.1);
+$shadow-md: 0 0.8vw 2.5vw rgba(0, 0, 0, 0.2);
+$shadow-lg: 0 1vw 3vw rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 2vw 4vw rgba(0, 0, 0, 0.15);
+$shadow-2xl: 0 2vw 6vw rgba(0, 0, 0, 0.3);
 
 // 动画变量
 $transition-fast: 0.3s ease;
@@ -63,12 +77,12 @@ $breakpoint-md: 768px;
 $breakpoint-lg: 1024px;
 $breakpoint-xl: 1200px;
 
-// 火柴人进度条变量
-$stick-figure-size: 50px;
-$progress-track-height: 4px;
+// 火柴人进度条变量 - 使用vw和vh单位
+$stick-figure-size: 5vw;
+$progress-track-height: 0.4vh;
 $progress-track-color: rgba(255, 255, 255, 0.3);
 
-// 缩略图变量
-$thumbnail-size: 80px;
-$thumbnail-gap: 10px;
-$thumbnail-active-border: 3px solid white;
+// 缩略图变量 - 使用vw单位
+$thumbnail-size: 8vw;
+$thumbnail-gap: 1vw;
+$thumbnail-active-border: 0.3vw solid white;

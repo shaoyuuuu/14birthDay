@@ -1,104 +1,51 @@
 @use "./_variables" as *;
 
-// 全局样式
+// 全局重置样式
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
-}
-
 body {
   font-family: $font-family;
-  background: $primary-gradient;
-  min-height: 100vh;
-  overflow-x: hidden;
   color: $text-primary;
-  cursor: default;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 $spacing-lg;
-}
-
-// 移除默认隐藏样式，因为我们使用v-if进行条件渲染
-.section {
+  // 绿色小清新主题背景 - 使用多层次渐变和纹理
+  background: linear-gradient(
+      135deg,
+      rgba(240, 255, 240, 0.9) 0%,
+      rgba(232, 245, 232, 0.95) 30%,
+      rgba(220, 240, 220, 0.98) 60%,
+      rgba(200, 247, 197, 0.95) 100%
+    ),
+    // 微妙的纹理效果
+    radial-gradient(
+        circle at 10% 20%,
+        rgba(102, 187, 106, 0.05) 0%,
+        transparent 50%
+      ),
+    radial-gradient(
+      circle at 90% 80%,
+      rgba(165, 214, 167, 0.08) 0%,
+      transparent 50%
+    ),
+    // 细微的网格纹理
+    repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 4px,
+        rgba(102, 187, 106, 0.01) 4px,
+        rgba(102, 187, 106, 0.01) 8px
+      );
+  line-height: 1.6;
+  overflow-x: hidden;
   min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background-attachment: fixed;
+  // 添加全局柔和的阴影效果
+  box-shadow: inset 0 0 100px rgba(102, 187, 106, 0.1);
 }
 
-// 动画
-@keyframes blink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0;
-  }
-}
-
-@keyframes float {
-  0%,
-  100% {
-    transform: translateY(0px) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-20px) rotate(5deg);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateY(-50px);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes cardEnter {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
+// 全局动画
 @keyframes sectionEnter {
   from {
     opacity: 0;
@@ -110,56 +57,21 @@ body {
   }
 }
 
-// 火柴人跑步动画
-@keyframes run {
-  0% {
-    transform: translateY(0) rotate(0deg);
-  }
-  50% {
-    transform: translateY(-8px) rotate(5deg);
-  }
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
+// 滚动条样式
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-// 缩略图切换动画
-@keyframes thumbnailScale {
-  0% {
-    transform: scale(0.9);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
+::-webkit-scrollbar-track {
+  background: rgba(102, 187, 106, 0.1);
 }
 
-// 响应式设计
-@media (max-width: $breakpoint-md) {
-  h1 {
-    font-size: $font-size-2xl;
-  }
-
-  .cursor {
-    font-size: $font-size-2xl;
-  }
-
-  .section-title {
-    font-size: $font-size-2xl;
-  }
+::-webkit-scrollbar-thumb {
+  background: rgba(102, 187, 106, 0.4);
+  border-radius: 4px;
 }
 
-@media (max-width: $breakpoint-sm) {
-  h1 {
-    font-size: $font-size-xl;
-  }
-
-  .cursor {
-    font-size: $font-size-xl;
-  }
-
-  .section-title {
-    font-size: $font-size-xl;
-  }
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 187, 106, 0.6);
 }

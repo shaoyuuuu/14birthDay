@@ -59,21 +59,17 @@ export const createCardEnterAnimation = (cardContent) => {
   gsap.set(cardNumber, {
     y: -20,
     scale: 0.8,
+    rotationX: -20,
   });
 
   gsap.set(cardTitle, {
     y: -30,
+    rotationX: -20,
   });
 
   // 设置日期的初始状态
   gsap.set(date, {
     y: -20,
-  });
-
-  // 设置图片部分的初始状态
-  gsap.set(mainImageContainer, {
-    scale: 0.9,
-    y: 20,
   });
 
   gsap.set(thumbnails, {
@@ -89,11 +85,11 @@ export const createCardEnterAnimation = (cardContent) => {
     y: 20,
   });
 
-  // 执行序列动画
+  // 执行序列动画，增强怀旧感和3D效果
   const tl = gsap.timeline({
     defaults: {
-      duration: 0.8,
-      ease: "power2.out",
+      duration: 1.0,
+      ease: "power4.out",
     },
   });
 
@@ -102,25 +98,35 @@ export const createCardEnterAnimation = (cardContent) => {
     opacity: 1,
     y: 0,
     scale: 1,
-    duration: 0.5,
+    rotationX: 0,
+    rotationY: 0,
+    duration: 0.7,
+    ease: "back.out(1.5)",
+    textShadow: "1px 1px 2px rgba(0, 0, 0, 0.1)",
   })
     .to(
       cardTitle,
       {
         opacity: 1,
         y: 0,
-        duration: 0.6,
+        rotationX: 0,
+        rotationY: 0,
+        duration: 0.8,
+        ease: "back.out(1.3)",
+        textShadow:
+          "2px 2px 4px rgba(255, 255, 255, 0.8), 0 0 10px rgba(200, 247, 197, 0.5)",
       },
-      "-=0.3"
+      "-=0.4"
     )
     .to(
       date,
       {
         opacity: 1,
         y: 0,
-        duration: 0.5,
+        duration: 0.7,
+        ease: "power3.out",
       },
-      "-=0.3"
+      "-=0.5"
     )
     .to(
       mainImageContainer,
@@ -128,37 +134,62 @@ export const createCardEnterAnimation = (cardContent) => {
         opacity: 1,
         scale: 1,
         y: 0,
-        duration: 0.7,
+        rotationX: 5,
+        rotationY: 0,
+        duration: 1.0,
+        ease: "elastic.out(1, 0.75)",
+        boxShadow:
+          "0 25px 50px rgba(102, 187, 106, 0.15), 0 15px 30px rgba(102, 187, 106, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.4)",
       },
-      "-=0.2"
+      "-=0.4"
     )
     .to(
       thumbnails,
       {
         opacity: 1,
         y: 0,
+        stagger: 0.15,
         duration: 0.6,
+        ease: "power3.out",
+        transform: "perspective(800px) rotateX(0deg) translateY(0px)",
       },
-      "-=0.4"
+      "-=0.6"
     )
     .to(
       description,
       {
         opacity: 1,
         y: 0,
-        duration: 0.6,
+        duration: 0.8,
+        ease: "power3.out",
       },
-      "-=0.3"
+      "-=0.5"
     )
     .to(
       memory,
       {
         opacity: 1,
         y: 0,
-        duration: 0.6,
+        duration: 0.9,
+        ease: "power4.out",
+        backgroundColor: "rgba(200, 247, 197, 0.15)",
       },
-      "-=0.4"
+      "-=0.6"
     );
+
+  // 添加卡片整体的微动画效果，增强小清新感
+  tl.to(
+    cardContent,
+    {
+      boxShadow:
+        "0 25px 50px rgba(102, 187, 106, 0.15), 0 15px 30px rgba(102, 187, 106, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+      duration: 0.8,
+      ease: "power2.out",
+      transform:
+        "perspective(1500px) translateZ(30px) translateY(-10px) rotateX(-2deg)",
+    },
+    "-=1.0"
+  );
 
   return tl;
 };
@@ -198,23 +229,26 @@ export const createSwipeGuideAnimation = (swipeIndicator) => {
  */
 export const createImageTransitionConfig = () => {
   return {
-    beforeEnter: (el) => gsap.set(el, { opacity: 0, scale: 1.02 }),
+    beforeEnter: (el) =>
+      gsap.set(el, { opacity: 0, scale: 1.05, rotationY: 10 }),
     enter: (el, done) => {
       gsap.to(el, {
-        duration: 0.3,
+        duration: 0.5,
         opacity: 1,
         scale: 1,
-        ease: "power2.out",
+        rotationY: 0,
+        ease: "power3.out",
         onComplete: done,
       });
     },
-    beforeLeave: (el) => gsap.set(el, { opacity: 1, scale: 1 }),
+    beforeLeave: (el) => gsap.set(el, { opacity: 1, scale: 1, rotationY: 0 }),
     leave: (el, done) => {
       gsap.to(el, {
-        duration: 0.3,
+        duration: 0.4,
         opacity: 0,
-        scale: 0.98,
-        ease: "power2.in",
+        scale: 0.95,
+        rotationY: -10,
+        ease: "power3.in",
         onComplete: done,
       });
     },
