@@ -1,0 +1,380 @@
+// 主题样式管理文件
+// 集中定义所有主题相关的样式，避免样式分散在各个组件中
+
+// 主题通用样式
+@mixin theme-common-styles {
+  // 主题通用的卡片基础样式
+  .card-item {
+    min-width: 100%;
+    min-height: calc(100% - #{$spacing-md} * 2);
+    margin: 0 auto;
+    border-radius: $border-radius-lg;
+    padding: $spacing-sm;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    background-size: cover;
+    background-position: center;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+
+    // 主题相关装饰 - 动态生成
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: $border-radius-lg;
+      pointer-events: none;
+      z-index: 0;
+      transition: background 0.4s ease;
+    }
+
+    // 微妙的高光效果
+    &::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      height: 30px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+      border-radius: $border-radius-lg;
+      pointer-events: none;
+      z-index: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    // 悬停效果增强 - 根据主题动态变化
+    &:hover {
+      transform: translateY(-4px) translateZ(0) scale(1.01);
+
+      &::after {
+        opacity: 0.8;
+      }
+    }
+  }
+
+  // 主题通用的卡片内容样式
+  .card-content {
+    width: 100%;
+    max-width: min(90vw, 700px);
+    height: 90vh;
+    margin: 0 auto;
+    border-radius: $border-radius-xl;
+    padding: $spacing-md;
+    position: relative;
+    z-index: 1;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
+    backdrop-filter: blur(30px);
+    -webkit-backdrop-filter: blur(30px);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    will-change: transform, box-shadow;
+
+    // 主题边框效果 - 增强版渐变光晕
+    &::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      right: -6px;
+      bottom: -6px;
+      border-radius: calc(#{$border-radius-xl} + 6px);
+      z-index: -2;
+      pointer-events: none;
+      opacity: 0.8;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      transform: translateZ(0);
+    }
+
+    // 表面高光效果 - 双层设计
+    &::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      height: 40px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.25) 0%, transparent 100%);
+      border-radius: $border-radius-xl;
+      pointer-events: none;
+      z-index: 2;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      opacity: 0.6;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.18);
+    }
+
+    // 悬停效果增强 - 主题相关
+    @media (hover: hover) and (pointer: fine) {
+      &:hover {
+        transform: translateY(-5px) translateZ(0);
+
+        &::before {
+          opacity: 1;
+          transform: translateY(-2px) translateZ(0);
+        }
+
+        &::after {
+          opacity: 0.9;
+          transform: translateY(2px);
+        }
+      }
+    }
+  }
+}
+
+// 主题特定样式
+@mixin theme-specific-styles {
+  // 1. 七七八八 - 日常回忆主题
+  .theme-七七八八 {
+    .card-item::before {
+      background: linear-gradient(135deg,
+          rgba(200, 247, 197, 0.25) 0%,
+          rgba(102, 187, 106, 0.3) 50%,
+          rgba(76, 175, 80, 0.25) 100%);
+    }
+
+    .card-item {
+      box-shadow:
+        0 40px 80px rgba(102, 187, 106, 0.12),
+        0 20px 40px rgba(102, 187, 106, 0.08),
+        0 8px 16px rgba(102, 187, 106, 0.06),
+        0 2px 8px rgba(102, 187, 106, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+      &:hover {
+        box-shadow:
+          0 50px 100px rgba(102, 187, 106, 0.15),
+          0 30px 60px rgba(102, 187, 106, 0.12),
+          0 12px 24px rgba(102, 187, 106, 0.1),
+          0 4px 12px rgba(102, 187, 106, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    .card-content {
+      background:
+        linear-gradient(135deg,
+          rgba(255, 255, 255, 0.98) 0%,
+          rgba(240, 255, 240, 0.97) 25%,
+          rgba(232, 245, 232, 0.95) 50%,
+          rgba(220, 240, 220, 0.93) 75%,
+          rgba(200, 247, 197, 0.9) 100%),
+        radial-gradient(circle at 15% 25%, rgba(102, 187, 106, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 85% 75%, rgba(165, 214, 167, 0.1) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(102, 187, 106, 0.01) 4px, rgba(102, 187, 106, 0.01) 8px);
+
+      box-shadow:
+        0 60px 180px rgba(102, 187, 106, 0.08),
+        0 30px 90px rgba(102, 187, 106, 0.1),
+        0 15px 45px rgba(102, 187, 106, 0.12),
+        0 5px 15px rgba(102, 187, 106, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.98),
+        inset 0 -1px 0 rgba(102, 187, 106, 0.05);
+
+      &::before {
+        background: linear-gradient(135deg,
+            rgba(200, 247, 197, 0.5) 0%,
+            rgba(165, 214, 167, 0.4) 30%,
+            rgba(102, 187, 106, 0.3) 50%,
+            rgba(76, 175, 80, 0.6) 100%);
+      }
+
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          box-shadow:
+            0 150px 450px rgba(102, 187, 106, 0.12),
+            0 80px 240px rgba(102, 187, 106, 0.15),
+            0 40px 120px rgba(102, 187, 106, 0.18),
+            0 20px 60px rgba(102, 187, 106, 0.2),
+            0 8px 24px rgba(102, 187, 106, 0.18),
+            inset 0 1px 0 rgba(255, 255, 255, 0.99),
+            inset 0 -1px 0 rgba(102, 187, 106, 0.05);
+        }
+      }
+    }
+  }
+
+  // 2. 乐山、华尖山、娘娘山、白海子、阿尔沟、青城山 - 旅行回忆主题
+  .theme-乐山,
+  .theme-华尖山,
+  .theme-娘娘山,
+  .theme-白海子,
+  .theme-阿尔沟,
+  .theme-青城山 {
+    .card-item::before {
+      background: linear-gradient(135deg,
+          rgba(66, 165, 245, 0.2) 0%,
+          rgba(102, 187, 106, 0.25) 50%,
+          rgba(76, 175, 80, 0.2) 100%);
+    }
+
+    .card-item {
+      box-shadow:
+        0 40px 80px rgba(66, 165, 245, 0.15),
+        0 20px 40px rgba(66, 165, 245, 0.1),
+        0 8px 16px rgba(66, 165, 245, 0.08),
+        0 2px 8px rgba(66, 165, 245, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+      &:hover {
+        box-shadow:
+          0 50px 100px rgba(66, 165, 245, 0.18),
+          0 30px 60px rgba(66, 165, 245, 0.15),
+          0 12px 24px rgba(66, 165, 245, 0.12),
+          0 4px 12px rgba(66, 165, 245, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    .card-content {
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          box-shadow:
+            0 150px 450px rgba(66, 165, 245, 0.15),
+            0 80px 240px rgba(66, 165, 245, 0.18),
+            0 40px 120px rgba(66, 165, 245, 0.2),
+            0 20px 60px rgba(66, 165, 245, 0.22),
+            0 8px 24px rgba(66, 165, 245, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.99),
+            inset 0 -1px 0 rgba(66, 165, 245, 0.08);
+        }
+      }
+    }
+  }
+
+  // 3. 打铁花、烛光晚餐 - 浪漫主题
+  .theme-打铁花,
+  .theme-烛光晚餐 {
+    .card-item::before {
+      background: linear-gradient(135deg,
+          rgba(255, 112, 67, 0.25) 0%,
+          rgba(233, 30, 99, 0.2) 50%,
+          rgba(244, 67, 54, 0.15) 100%);
+    }
+
+    .card-item {
+      box-shadow:
+        0 40px 80px rgba(255, 112, 67, 0.15),
+        0 20px 40px rgba(255, 112, 67, 0.1),
+        0 8px 16px rgba(255, 112, 67, 0.08),
+        0 2px 8px rgba(255, 112, 67, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+      &:hover {
+        box-shadow:
+          0 50px 100px rgba(255, 112, 67, 0.18),
+          0 30px 60px rgba(255, 112, 67, 0.15),
+          0 12px 24px rgba(255, 112, 67, 0.12),
+          0 4px 12px rgba(255, 112, 67, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    .card-content {
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          box-shadow:
+            0 150px 450px rgba(255, 112, 67, 0.18),
+            0 80px 240px rgba(255, 112, 67, 0.2),
+            0 40px 120px rgba(255, 112, 67, 0.22),
+            0 20px 60px rgba(255, 112, 67, 0.25),
+            0 8px 24px rgba(255, 112, 67, 0.22),
+            inset 0 1px 0 rgba(255, 255, 255, 0.99),
+            inset 0 -1px 0 rgba(255, 112, 67, 0.1);
+        }
+      }
+    }
+  }
+
+  // 4. 天府艺术馆、大二普 - 艺术文化主题
+  .theme-天府艺术馆,
+  .theme-大二普 {
+    .card-item::before {
+      background: linear-gradient(135deg,
+          rgba(244, 67, 54, 0.2) 0%,
+          rgba(149, 117, 205, 0.25) 50%,
+          rgba(66, 165, 245, 0.2) 100%);
+    }
+
+    .card-item {
+      box-shadow:
+        0 40px 80px rgba(244, 67, 54, 0.12),
+        0 20px 40px rgba(244, 67, 54, 0.08),
+        0 8px 16px rgba(244, 67, 54, 0.06),
+        0 2px 8px rgba(244, 67, 54, 0.04),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+      &:hover {
+        box-shadow:
+          0 50px 100px rgba(244, 67, 54, 0.15),
+          0 30px 60px rgba(244, 67, 54, 0.12),
+          0 12px 24px rgba(244, 67, 54, 0.1),
+          0 4px 12px rgba(244, 67, 54, 0.08),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
+      }
+    }
+
+    .card-content {
+      @media (hover: hover) and (pointer: fine) {
+        &:hover {
+          box-shadow:
+            0 150px 450px rgba(244, 67, 54, 0.15),
+            0 80px 240px rgba(244, 67, 54, 0.18),
+            0 40px 120px rgba(244, 67, 54, 0.2),
+            0 20px 60px rgba(244, 67, 54, 0.22),
+            0 8px 24px rgba(244, 67, 54, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.99),
+            inset 0 -1px 0 rgba(244, 67, 54, 0.08);
+        }
+      }
+    }
+  }
+
+  // 5. 乐山、白海子 - 蓝色主题特殊样式
+  .theme-乐山,
+  .theme-白海子 {
+    .card-content::before {
+      background: linear-gradient(135deg,
+          rgba(66, 165, 245, 0.5) 0%,
+          rgba(102, 187, 106, 0.4) 30%,
+          rgba(76, 175, 80, 0.6) 100%);
+    }
+  }
+
+  // 6. 打铁花、烛光晚餐 - 橙色主题特殊样式
+  .theme-打铁花,
+  .theme-烛光晚餐 {
+    .card-content::before {
+      background: linear-gradient(135deg,
+          rgba(255, 112, 67, 0.5) 0%,
+          rgba(233, 30, 99, 0.4) 30%,
+          rgba(244, 67, 54, 0.6) 100%);
+    }
+  }
+
+  // 7. 天府艺术馆、大二普 - 紫色主题特殊样式
+  .theme-天府艺术馆,
+  .theme-大二普 {
+    .card-content::before {
+      background: linear-gradient(135deg,
+          rgba(244, 67, 54, 0.5) 0%,
+          rgba(149, 117, 205, 0.4) 30%,
+          rgba(66, 165, 245, 0.6) 100%);
+    }
+  }
+}
+
+// 导出主题样式
+@include theme-common-styles;
+@include theme-specific-styles;

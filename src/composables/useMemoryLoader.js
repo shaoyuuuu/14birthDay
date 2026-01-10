@@ -4,8 +4,7 @@
  */
 
 import { ref, onMounted } from "vue";
-// 导入自动生成的图片列表数据
-import memoryImages from "../data/memoryImages.json"; // eslint-disable-line import/no-unresolved
+import { memoryApi } from "../services/apiService";
 
 /**
  * 从public/memory文件夹加载回忆内容
@@ -22,23 +21,7 @@ export default function useMemoryLoader() {
    */
   const getMemoryFolders = async () => {
     try {
-      // 由于public目录的特殊性，我们需要手动指定文件夹名称
-      // 这里可以根据实际情况修改或扩展
-      const folders = [
-        "七七八八",
-        "乐山",
-        "华尖山",
-        "大二普",
-        "天府艺术馆",
-        "娘娘山",
-        "打铁花",
-        "植物园",
-        "烛光晚餐",
-        "白海子",
-        "阿尔沟",
-        "青城山",
-      ];
-      return folders;
+      return await memoryApi.getMemoryFolders();
     } catch (err) {
       console.error("获取回忆文件夹列表失败:", err);
       return [];
@@ -52,37 +35,15 @@ export default function useMemoryLoader() {
    */
   const loadMemoryDetail = async (folderName) => {
     try {
-      // 加载memory.json文件
-      // 注意：需要添加base前缀，从vite.config.js中的base配置获取
-      const baseUrl = import.meta.env.BASE_URL || "/";
-      const jsonUrl = `${baseUrl}memory/${folderName}/memory.json`;
-      const response = await fetch(jsonUrl);
-
-      if (!response.ok) {
-        throw new Error(`加载${folderName}的memory.json失败`);
-      }
-
-      const memoryData = await response.json();
-
-      // 手动收集该文件夹下的图片
-      // 注意：这里需要根据实际情况修改图片命名规则
-      // 由于我们无法在运行时直接读取public目录的文件列表
-      // 所以需要约定图片的命名规则或在JSON文件中列出图片
-
-      // 假设每个回忆文件夹下有任意数量的图片文件
-      // 这里我们需要一种方式来获取图片列表
-      // 由于浏览器环境的限制，我们无法直接读取服务器文件系统
-      // 所以最好的方法是在memory.json文件中包含图片列表
-
-      // 使用自动生成的图片列表
-      const images = memoryImages[folderName] || [];
-      memoryData.images = images.map(
-        (img) => `${baseUrl}memory/${folderName}/${img}`
-      );
+      const memoryData = await memoryApi.getMemoryDetail(folderName);
+      const images = await memoryApi.getMemoryImages(folderName);
 
       return {
         ...memoryData,
         folderName,
+        images,
+        currentImage: images.length > 0 ? images[0] : null,
+        theme: folderName // 直接使用文件夹名称作为主题名称
       };
     } catch (err) {
       console.error(`加载回忆${folderName}失败:`, err);

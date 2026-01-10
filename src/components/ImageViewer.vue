@@ -1,21 +1,78 @@
 <template>
-  <div class="card-image-wrapper">
-    <!-- 主图片 -->
-    <div class="card-main-image-container">
-      <Transition mode="out-in" name="image-fade">
-        <img :key="currentImage" :src="currentImage" :alt="'图片'" class="card-main-image" />
-      </Transition>
-    </div>
-    <!-- 缩略图 -->
-    <div class="card-thumbnails">
-      <div v-for="(img, idx) in images" :key="idx" class="thumbnail-item" @click="switchImage(img)">
-        <img :src="img" :alt="`缩略图 ${idx + 1}`" class="thumbnail-image" :class="{ 'active': img === currentImage }" />
+  <div class="image-viewer" ref="imageWrapper">
+    <div class="stickers-layer">
+      <div v-for="(sticker, index) in activeStickers" :key="`sticker-${index}`" class="sticker"
+        :style="stickerStyles[index]">
+        {{ sticker }}
       </div>
+    </div>
+
+    <div class="main-photo-wrapper">
+      <transition name="fade" mode="out-in">
+        <div class="photo-card main-photo" ref="mainPhoto" :key="currentOptimizedImage" @click="pauseAutoPlay">
+          <div v-show="isMainImageLoading" class="image-loading-overlay">
+            <div class="loading-spinner"></div>
+            <div class="loading-dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </div>
+          <CachedImage :src="currentOptimizedImage" :alt="'主照片'" imageClass="photo-image" fitMode="auto"
+            :class="{ 'loading': isMainImageLoading }" @load="handleMainImageLoad" @error="handleMainImageError" />
+          <div class="tape tape-main" :style="mainTapeStyle"></div>
+        </div>
+      </transition>
+    </div>
+
+    <div class="thumbnails-layer">
+      <transition-group name="thumbnail" tag="div" class="thumbnails-grid">
+        <div v-for="(img, idx) in thumbnailImages" :key="`${img}-${idx}`" class="photo-card thumbnail"
+          :class="{ 'active': img === currentOptimizedImage }" :style="getThumbnailStyle(idx)"
+          @click="handleThumbnailClick(img, idx)">
+          <transition name="fade" mode="out-in">
+            <CachedImage :key="img" :src="img" :alt="`缩略图 ${idx + 1}`" imageClass="photo-image" fitMode="cover" />
+          </transition>
+          <div class="tape tape-small" :style="getThumbnailTapeStyle(idx)"></div>
+        </div>
+      </transition-group>
+    </div>
+
+    <div class="hand-drawn-layer">
+      <svg v-for="(style, index) in handDrawnStyles" :key="`handdrawn-${index}`" class="hand-drawn-element"
+        :style="style" viewBox="0 0 100 100">
+        <circle v-if="style.type === 'circle'" cx="50" cy="50" r="45" fill="none" :stroke="style.stroke"
+          stroke-width="2" stroke-dasharray="5,5" />
+        <path v-else-if="style.type === 'star'"
+          d="M50 5 L61 35 L95 35 L68 55 L79 85 L50 65 L21 85 L32 55 L5 35 L39 35 Z" fill="none" :stroke="style.stroke"
+          stroke-width="2" />
+        <path v-else-if="style.type === 'heart'"
+          d="M50 30 C50 30 30 10 30 30 C30 45 50 65 50 65 C50 65 70 45 70 30 C70 10 50 30 50 30" fill="none"
+          :stroke="style.stroke" stroke-width="2" />
+        <path v-else-if="style.type === 'arrow'" d="M20 50 L80 50 M70 40 L80 50 L70 60" fill="none"
+          :stroke="style.stroke" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+      </svg>
     </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import gsap from 'gsap'
+import CachedImage from './CachedImage.vue'
+import { getThemeConfig } from '../data/themeConfigs'
+import {
+  randomStickerPosition,
+  randomTapeStyle,
+  randomScatteredPosition,
+  randomHandDrawnStyle,
+  shuffleArray,
+  randomInt,
+  randomFloat,
+  randomScale,
+  randomRotation
+} from '../utils/randomUtils'
+
 const props = defineProps({
   images: {
     type: Array,
@@ -24,255 +81,541 @@ const props = defineProps({
   currentImage: {
     type: String,
     required: true
+  },
+  theme: {
+    type: String,
+    default: '七七八八'
   }
 })
 
 const emit = defineEmits(['image-change'])
 
-const switchImage = (imgSrc) => {
+const themeConfig = computed(() => getThemeConfig(props.theme))
+
+const thumbnailImages = computed(() => {
+  return props.images
+})
+
+const currentOptimizedImage = computed(() => {
+  return props.currentImage
+})
+
+const imageWrapper = ref(null)
+const mainPhoto = ref(null)
+const isMainImageLoading = ref(false)
+const mainImageLoaded = ref(false)
+
+const isAutoPlaying = ref(true)
+const isPaused = ref(false)
+let autoPlayTimer = null
+let pauseTimer = null
+const AUTO_PLAY_INTERVAL = 3000
+const PAUSE_DURATION = 5000
+
+const stickerStyles = ref([])
+const tapeStyles = ref([])
+const thumbnailStyles = ref([])
+const thumbnailTapeWidths = ref([])
+const thumbnailTransforms = ref([])
+const handDrawnStyles = ref([])
+const mainTapeStyle = ref({})
+let stickerAnimations = []
+
+const activeStickers = computed(() => {
+  const shuffled = shuffleArray(themeConfig.value.decor.stickers || [])
+  const count = randomInt(3, 5)
+  return shuffled.slice(0, count)
+})
+
+const initializeStyles = () => {
+  if (thumbnailImages.value.length === 0) return
+
+  stickerStyles.value = activeStickers.value.map((_, index) =>
+    randomStickerPosition(index, activeStickers.value.length)
+  )
+
+  const tapeColors = themeConfig.value.decor.tapeColors || ['rgba(255, 200, 150, 0.75)']
+  tapeStyles.value = tapeColors.map(() => randomTapeStyle(tapeColors))
+
+  thumbnailStyles.value = thumbnailImages.value.map((_, index) =>
+    randomScatteredPosition(index, thumbnailImages.value.length)
+  )
+
+  thumbnailTapeWidths.value = thumbnailImages.value.map(() => randomInt(45, 65))
+
+  thumbnailTransforms.value = thumbnailImages.value.map(() => {
+    const scale = randomScale(0.6, 0.8)
+    const rotation = randomRotation(12)
+    return {
+      transform: `rotate(${rotation}deg) scale(${scale})`,
+      '--rotation': `${rotation}deg`,
+      '--scale': scale
+    }
+  })
+
+  const handDrawnTypes = themeConfig.value.decor.handDrawn || []
+  handDrawnStyles.value = handDrawnTypes.map((type, index) => ({
+    ...randomHandDrawnStyle(type, themeConfig.value.colors.primary),
+    type
+  }))
+
+  mainTapeStyle.value = {
+    background: tapeColors[0],
+    transform: `translateX(-50%) rotate(${randomFloat(-2, 2, 1)}deg)`,
+    width: `${randomInt(100, 130)}px`
+  }
+}
+
+const animateStickers = () => {
+  const stickers = document.querySelectorAll('.sticker')
+  stickerAnimations.forEach(anim => anim.kill())
+  stickerAnimations = []
+
+  stickers.forEach((sticker, index) => {
+    const anim = gsap.to(sticker, {
+      y: -8,
+      rotation: 5,
+      duration: 1.5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut',
+      delay: index * 0.2
+    })
+    stickerAnimations.push(anim)
+  })
+}
+
+const handleThumbnailClick = (imgSrc, index) => {
+  if (imgSrc === currentOptimizedImage.value) return
+  pauseAutoPlay()
   emit('image-change', imgSrc)
 }
+
+const nextImage = () => {
+  const currentIndex = props.images.indexOf(props.currentImage)
+  const nextIndex = (currentIndex + 1) % props.images.length
+  emit('image-change', props.images[nextIndex])
+}
+
+const startAutoPlay = () => {
+  stopAutoPlay()
+  isAutoPlaying.value = true
+  autoPlayTimer = setInterval(() => {
+    if (!isPaused.value) {
+      nextImage()
+    }
+  }, AUTO_PLAY_INTERVAL)
+}
+
+const stopAutoPlay = () => {
+  if (autoPlayTimer) {
+    clearInterval(autoPlayTimer)
+    autoPlayTimer = null
+  }
+  isAutoPlaying.value = false
+}
+
+const pauseAutoPlay = () => {
+  if (!isAutoPlaying.value) return
+
+  isPaused.value = true
+
+  if (pauseTimer) {
+    clearTimeout(pauseTimer)
+  }
+
+  pauseTimer = setTimeout(() => {
+    isPaused.value = false
+  }, PAUSE_DURATION)
+}
+
+const handleMainImageLoad = () => {
+  isMainImageLoading.value = false
+  mainImageLoaded.value = true
+}
+
+const handleMainImageError = () => {
+  isMainImageLoading.value = false
+  mainImageLoaded.value = false
+}
+
+watch(() => props.currentImage, (newImage, oldImage) => {
+  if (newImage !== oldImage) {
+    isMainImageLoading.value = true
+    mainImageLoaded.value = false
+  }
+}, { immediate: true })
+
+const getThumbnailStyle = (index) => {
+  const baseStyle = thumbnailStyles.value[index] || {}
+  const transform = thumbnailTransforms.value[index] || {}
+
+  return {
+    ...baseStyle,
+    ...transform,
+    width: 'min(140px, 18vw)',
+    height: 'min(105px, 13.5vw)'
+  }
+}
+
+const getThumbnailTapeStyle = (index) => {
+  const tapeColors = themeConfig.value.decor.tapeColors || ['rgba(255, 200, 150, 0.75)']
+  const smallTape = tapeStyles.value[index % Math.max(tapeStyles.value.length, 1)]
+
+  if (!smallTape) {
+    return {
+      background: tapeColors[0],
+      transform: `translateX(-50%) rotate(${randomFloat(-5, 5, 1)}deg)`,
+      width: `${thumbnailTapeWidths.value[index] || 50}px`
+    }
+  }
+
+  return {
+    background: smallTape.background,
+    transform: `translateX(-50%) rotate(${smallTape.rotation}deg)`,
+    width: `${thumbnailTapeWidths.value[index] || 50}px`
+  }
+}
+
+onMounted(() => {
+  initializeStyles()
+  animateStickers()
+  startAutoPlay()
+})
+
+watch(thumbnailImages, () => {
+  initializeStyles()
+}, { immediate: true })
+
+onUnmounted(() => {
+  stickerAnimations.forEach(anim => anim.kill())
+  stopAutoPlay()
+  if (pauseTimer) {
+    clearTimeout(pauseTimer)
+  }
+})
 </script>
 
 <style lang="scss" scoped>
 @use '../assets/scss/_variables' as *;
 
-.card-image-wrapper {
-  // margin: $spacing-xs 0 $spacing-lg 0;
+.image-viewer {
   width: 100%;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.card-main-image-container {
-  width: 100%;
-  height: min(35vh, 350px);
-  border-radius: $border-radius-xl;
-  overflow: hidden;
-  /* 柔和的阴影效果 - 符合小清新风格 */
-  box-shadow:
-    /* 远距离柔和阴影 */
-    0 60px 150px rgba(102, 187, 106, 0.1),
-    /* 中距离阴影 */
-    0 30px 80px rgba(102, 187, 106, 0.08),
-    /* 近距离阴影 */
-    0 15px 40px rgba(102, 187, 106, 0.12),
-    /* 极近距离阴影 */
-    0 8px 25px rgba(102, 187, 106, 0.08),
-    /* 底层阴影 */
-    0 3px 12px rgba(102, 187, 106, 0.06),
-    /* 高光内阴影 - 增加表面光泽 */
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
-  margin-bottom: $spacing-sm;
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  height: min(35vh, 320px);
   position: relative;
-  /* 清新的背景效果 - 增强层次感 */
-  background:
-    linear-gradient(135deg,
-      rgba(240, 255, 240, 0.8) 0%,
-      rgba(200, 247, 197, 0.6) 50%,
-      rgba(165, 214, 167, 0.4) 100%),
-    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(102, 187, 106, 0.08) 0%, transparent 50%);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-
-  /* 精致相框边框效果 - 增强立体感 */
-  &::before {
-    content: '';
-    position: absolute;
-    top: -12px;
-    left: -12px;
-    right: -12px;
-    bottom: -12px;
-    border-radius: calc(#{$border-radius-xl} + 12px);
-    background: linear-gradient(135deg,
-        rgba(200, 247, 197, 0.6) 0%,
-        rgba(165, 214, 167, 0.45) 50%,
-        rgba(76, 175, 80, 0.7) 100%);
-    z-index: -1;
-    pointer-events: none;
-    opacity: 0.7;
-    /* 边框高光细节 - 更丰富的层次 */
-    box-shadow:
-      inset 0 2px 0 rgba(255, 255, 255, 0.95),
-      inset 0 -2px 0 rgba(0, 0, 0, 0.2),
-      0 1px 0 rgba(255, 255, 255, 0.6),
-      0 -1px 0 rgba(0, 0, 0, 0.1);
-    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    transform: translateZ(0);
-  }
-
-  /* 微妙的光泽效果 */
-  &::after {
-    content: '';
-    position: absolute;
-    top: 15px;
-    left: 20px;
-    right: 20px;
-    height: 30px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.18) 0%, transparent 100%);
-    border-radius: 50%;
-    pointer-events: none;
-    z-index: 2;
-    transition: opacity 0.4s ease;
-    opacity: 0.5;
-  }
-
-  /* 悬停效果增强 - 符合小清新风格 */
-  &:hover {
-    box-shadow:
-      /* 最远距离阴影增强 */
-      0 100px 250px rgba(102, 187, 106, 0.15),
-      /* 远距离阴影增强 */
-      0 60px 150px rgba(102, 187, 106, 0.12),
-      /* 中距离阴影增强 */
-      0 40px 100px rgba(102, 187, 106, 0.18),
-      /* 近距离阴影增强 */
-      0 20px 50px rgba(102, 187, 106, 0.15),
-      /* 极近距离阴影增强 */
-      0 10px 30px rgba(102, 187, 106, 0.12),
-      /* 底层阴影增强 */
-      0 5px 15px rgba(102, 187, 106, 0.1),
-      /* 高光内阴影增强 */
-      inset 0 1px 0 rgba(255, 255, 255, 0.7);
-
-    &::before {
-      opacity: 1;
-      transform: translateY(-2px) translateZ(0);
-    }
-
-    &::after {
-      opacity: 0.8;
-    }
-  }
+  overflow: visible;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.card-main-image {
+.stickers-layer {
+  position: absolute;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  border-radius: $border-radius-xl;
-  /* 高级滤镜效果 - 增强图片质感 */
-  filter:
-    sepia(0.1) saturate(0.95) brightness(1.08) contrast(1.02) hue-rotate(10deg);
-  transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  /* 微妙的边框效果 */
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  pointer-events: none;
+  z-index: 8;
 }
 
-.card-thumbnails {
-  display: flex;
-  gap: $spacing-md;
-  overflow-x: auto;
-  padding: $spacing-sm 0;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(102, 187, 106, 0.4) transparent;
+.sticker {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0.6;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
+
+  &:hover {
+    transform: scale(1.2) rotate(5deg) !important;
+    opacity: 0.9;
+  }
 }
 
-.thumbnail-item {
-  flex-shrink: 0;
-  width: min(80px, 10vw);
-  height: min(60px, 8vw);
-  border-radius: $border-radius-lg;
-  overflow: hidden;
-  cursor: pointer;
-  /* 小清新风格缩略图阴影 */
-  box-shadow:
-    /* 远处阴影 */
-    0 15px 30px rgba(102, 187, 106, 0.1),
-    /* 中层阴影 */
-    0 8px 20px rgba(102, 187, 106, 0.08),
-    /* 近层阴影 */
-    0 2px 10px rgba(102, 187, 106, 0.06),
-    /* 高光内阴影 */
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.75;
+.main-photo-wrapper {
   position: relative;
-  transform: translateZ(0);
-  will-change: transform, box-shadow, opacity;
-  /* 精致背景 */
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.photo-card {
+  position: relative;
+  background: #fff;
+  padding: 12px;
+  box-shadow:
+    0 4px 12px rgba(139, 119, 101, 0.2),
+    0 8px 24px rgba(139, 119, 101, 0.15),
+    0 2px 6px rgba(139, 119, 101, 0.1);
+  cursor: pointer;
+  overflow: hidden;
+  border-radius: 2px;
+  border: 1px solid rgba(139, 119, 101, 0.15);
+  will-change: transform, opacity;
+}
+
+.main-photo {
+  width: min(55vh, 480px);
+  height: min(41vh, 360px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.photo-image {
+  border-radius: 1px;
+  filter: sepia(0.12) saturate(0.92) brightness(1.03) contrast(1.08);
+  transition: opacity 0.3s ease;
+
+  &.loading {
+    opacity: 0;
+  }
+}
+
+.image-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.9);
+  z-index: 1;
+  border-radius: 1px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(139, 119, 101, 0.2);
+  border-top-color: rgba(139, 119, 101, 0.8);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loading-dots {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+
+  span {
+    width: 8px;
+    height: 8px;
+    background: rgba(139, 119, 101, 0.6);
+    border-radius: 50%;
+    animation: bounce 1.4s ease-in-out infinite both;
+
+    &:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    &:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    &:nth-child(3) {
+      animation-delay: 0s;
+    }
+  }
+}
+
+@keyframes bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+
+  40% {
+    transform: scale(1);
+  }
+}
+
+.tape {
+  position: absolute;
+  height: 20px;
   background: linear-gradient(135deg,
-      rgba($primary-color, 0.2) 0%,
-      rgba($secondary-color, 0.15) 100%);
+      rgba(255, 200, 150, 0.75) 0%,
+      rgba(255, 220, 180, 0.75) 50%,
+      rgba(255, 200, 150, 0.75) 100%);
+  opacity: 0.85;
+  z-index: 10;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.tape-main {
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-1.5deg);
+  width: 110px;
+}
+
+.tape-small {
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.thumbnails-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.thumbnails-grid {
+  width: 100%;
+  height: 100%;
+}
+
+.thumbnail {
+  position: absolute;
+  width: min(140px, 18vw);
+  height: min(105px, 13.5vw);
+  pointer-events: auto;
+  opacity: 0.85;
+  padding: 4px;
+  will-change: transform, opacity;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     opacity: 1;
-    transform: translateY(-3px) scale(1.12);
     box-shadow:
-      /* 远处阴影增强 */
-      0 25px 50px rgba(102, 187, 106, 0.2),
-      /* 中层阴影增强 */
-      0 15px 35px rgba(102, 187, 106, 0.18),
-      /* 近层阴影增强 */
-      0 8px 20px rgba(102, 187, 106, 0.15),
-      /* 底层阴影增强 */
-      0 2px 8px rgba(102, 187, 106, 0.1),
-      /* 高光内阴影增强 */
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      0 8px 18px rgba(139, 119, 101, 0.3),
+      0 16px 36px rgba(139, 119, 101, 0.25),
+      0 6px 12px rgba(139, 119, 101, 0.2);
+    z-index: 100 !important;
+  }
+
+  &.active {
+    opacity: 1;
+    box-shadow:
+      0 6px 20px rgba(196, 167, 125, 0.5),
+      0 12px 40px rgba(196, 167, 125, 0.4),
+      0 4px 12px rgba(196, 167, 125, 0.3);
+    border-color: rgba(196, 167, 125, 0.8);
+    border-width: 3px;
+    transform: scale(1.08) !important;
+    z-index: 50 !important;
+
+    .tape-small {
+      opacity: 1;
+      transform: translateX(-50%) rotate(0deg) !important;
+      background: linear-gradient(135deg,
+          rgba(255, 200, 150, 0.95) 0%,
+          rgba(255, 220, 180, 0.95) 50%,
+          rgba(255, 200, 150, 0.95) 100%);
+    }
+
+    .photo-image {
+      filter: sepia(0.08) saturate(0.95) brightness(1.05) contrast(1.1);
+    }
   }
 }
 
-.thumbnail-item.active {
-  opacity: 1;
-  transform: translateY(-3px) scale(1.12);
-  box-shadow:
-    /* 远处阴影 */
-    0 20px 40px rgba($primary-color, 0.4),
-    /* 中层阴影 */
-    0 10px 25px rgba($primary-color, 0.3),
-    /* 近层阴影 */
-    0 5px 15px rgba($primary-color, 0.2),
-    /* 高光内阴影 */
-    inset 0 1px 0 rgba(255, 255, 255, 0.8),
-    /* 发光效果 */
-    0 0 25px rgba($primary-color, 0.5);
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.thumbnail-image {
+.hand-drawn-layer {
+  position: absolute;
   width: 100%;
   height: 100%;
-  object-fit: cover;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  filter:
-    sepia(0.2) saturate(0.85) brightness(1.02) contrast(0.9);
-  border-radius: $border-radius-lg;
+  pointer-events: none;
+  z-index: 3;
 }
 
-.thumbnail-item:hover .thumbnail-image,
-.thumbnail-item.active .thumbnail-image {
-  transform: scale(1.1);
-  opacity: 1;
-  filter:
-    sepia(0.1) saturate(1) brightness(1.05) contrast(1);
+.hand-drawn-element {
+  position: absolute;
+  transition: all 0.3s ease;
+
+  &:hover {
+    opacity: 0.6;
+    transform: scale(1.1) rotate(5deg);
+  }
 }
 
-/* 滚动条样式 */
-.card-thumbnails::-webkit-scrollbar {
-  height: 6px;
+@media (max-width: 768px) {
+  .thumbnail {
+    width: min(160px, 22vw);
+    height: min(120px, 16.5vw);
+    padding: 5px;
+  }
+
+  .sticker {
+    font-size: 20px;
+  }
+
+  .main-photo {
+    width: min(40vh, 350px);
+    height: min(30vh, 260px);
+  }
 }
 
-.card-thumbnails::-webkit-scrollbar-track {
-  background: transparent;
+@media (max-width: 480px) {
+  .thumbnail {
+    width: min(180px, 28vw);
+    height: min(135px, 21vw);
+    padding: 6px;
+  }
+
+  .sticker {
+    font-size: 18px;
+  }
+
+  .tape {
+    height: 16px;
+  }
+
+  .main-photo {
+    width: min(35vh, 300px);
+    height: min(26vh, 230px);
+  }
 }
 
-.card-thumbnails::-webkit-scrollbar-thumb {
-  background-color: rgba(102, 187, 106, 0.4);
-  border-radius: $border-radius-full;
-}
-
-/* 图片过渡动画 */
-.image-fade-enter-active,
-.image-fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.4s ease;
 }
 
-.image-fade-enter-from,
-.image-fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
+}
+
+.thumbnail-enter-active,
+.thumbnail-leave-active {
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.thumbnail-enter-from {
+  opacity: 0;
+  transform: scale(0.8) translateY(20px);
+}
+
+.thumbnail-leave-to {
+  opacity: 0;
+  transform: scale(0.8) translateY(-20px);
+}
+
+.thumbnail-move {
+  transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 </style>

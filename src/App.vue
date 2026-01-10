@@ -1,14 +1,12 @@
 <template>
   <div class="app">
     <!-- 打字机特效区域 - 初始显示打字效果 -->
-    <section id="typewriter-section" class="section" v-if="currentSection === 'typewriter'">
-      <!-- 打字机组件，完成后触发切换到回忆界面的事件 -->
+    <section id="typewriter-section" class="section" v-if="appStore.currentSection === 'typewriter'">
       <Typewriter @typewriter-complete="switchToTimeline" />
     </section>
 
     <!-- 时间轴回忆界面 - 点击开始回忆后显示 -->
-    <section id="timeline-section" class="section" v-if="currentSection === 'timeline'">
-      <!-- 回忆页面组件 - 整合动态背景和时间轴 -->
+    <section id="timeline-section" class="section" v-if="appStore.currentSection === 'timeline'">
       <MemoryPage />
     </section>
   </div>
@@ -20,22 +18,27 @@
  * 管理应用的整体布局和界面切换逻辑
  */
 
-// 引入Vue 3 Composition API的ref函数用于创建响应式数据
-import { ref } from 'vue'
+import { defineAsyncComponent, onMounted } from 'vue'
+import appStore, { actions, loadPreferences } from './store/index.js'
 
-// 引入项目组件
-import Typewriter from './components/Typewriter.vue' // 打字机特效组件
-import MemoryPage from './components/MemoryPage.vue' // 回忆页面组件
+// 使用异步组件实现懒加载，优化首屏加载性能
+const Typewriter = defineAsyncComponent(() =>
+  import('./components/Typewriter.vue')
+)
+const MemoryPage = defineAsyncComponent(() =>
+  import('./views/MemoryPage.vue')
+)
 
-// 响应式数据定义
-const currentSection = ref('typewriter') // 当前显示的界面：'typewriter' 或 'timeline'
+// 组件挂载时加载用户偏好
+onMounted(() => {
+  loadPreferences()
+})
 
 /**
  * 切换到时间轴回忆界面
- * 由Typewriter组件的typewriter-complete事件触发
  */
 const switchToTimeline = () => {
-  currentSection.value = 'timeline'
+  actions.setCurrentSection('timeline')
 }
 </script>
 

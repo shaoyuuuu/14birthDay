@@ -5,7 +5,7 @@
     <!-- 火柴人1（前方拉人的） -->
     <div ref="frontFigure" class="stick-figure front" :style="frontFigureStyle">
       <div class="figure">
-        <img :src="frontAvatar" alt="前方火柴人" class="avatar" :style="avatarStyle" />
+        <CachedImage :src="frontAvatar" alt="前方火柴人" imageClass="avatar" fitMode="cover" :style="avatarStyle" />
         <div class="body" :style="bodyStyle"></div>
         <!-- 左手臂（拉人的手，向前伸） -->
         <div ref="frontLeftArm" class="arm left pulling" :style="frontLeftArmStyle"></div>
@@ -27,7 +27,7 @@
     <!-- 火柴人2（后方被拉的） -->
     <div ref="rearFigure" class="stick-figure rear" :style="rearFigureStyle">
       <div class="figure">
-        <img :src="rearAvatar" alt="后方火柴人" class="avatar" :style="avatarStyle" />
+        <CachedImage :src="rearAvatar" alt="后方火柴人" imageClass="avatar" fitMode="cover" :style="avatarStyle" />
         <div class="body" :style="bodyStyle"></div>
         <!-- 左手臂（正常摆动） -->
         <div ref="rearLeftArm" class="arm left" :style="rearLeftArmStyle"></div>
@@ -44,7 +44,7 @@
 
 <script setup>
 import { ref, watch, computed, onMounted, onUnmounted } from 'vue'
-// 引入GSAP动画库
+import CachedImage from './CachedImage.vue'
 import gsap from 'gsap'
 
 // 定义组件属性
@@ -115,6 +115,7 @@ const rearFigure = ref(null)
 // 动画时间线引用
 let frontRunningTimeline = null
 let rearRunningTimeline = null
+let dialogAnimation = null
 
 // 计算属性 - 样式
 
@@ -441,6 +442,27 @@ const updateStickFigurePositions = () => {
   })
 }
 
+// 对话框淡入动画
+const animateDialogBox = () => {
+  const dialogBox = document.querySelector('.dialog-box')
+  if (dialogBox) {
+    dialogAnimation = gsap.fromTo(dialogBox,
+      {
+        opacity: 0,
+        x: -20,
+        scale: 0.8
+      },
+      {
+        opacity: 1,
+        x: 0,
+        scale: 1,
+        duration: 0.4,
+        ease: 'power2.out'
+      }
+    )
+  }
+}
+
 // 监听进度变化，更新火柴人位置
 watch(
   () => props.progress,
@@ -456,6 +478,7 @@ onMounted(() => {
   setTimeout(() => {
     createFrontRunningTimeline()
     createRearRunningTimeline()
+    animateDialogBox()
   }, 0)
 })
 
@@ -466,6 +489,9 @@ onUnmounted(() => {
   }
   if (rearRunningTimeline) {
     rearRunningTimeline.kill()
+  }
+  if (dialogAnimation) {
+    dialogAnimation.kill()
   }
 })
 </script>
@@ -627,7 +653,6 @@ $shadow-color: rgba(0, 0, 0, 0.2); // 阴影颜色
   border: 1px solid rgba(0, 0, 0, 0.1);
   word-wrap: break-word;
   white-space: normal;
-  animation: dialogFadeIn 0.4s ease-out;
 }
 
 /* 对话框箭头 */
@@ -642,19 +667,6 @@ $shadow-color: rgba(0, 0, 0, 0.2); // 阴影颜色
   border-bottom: 6px solid transparent;
   border-right: 6px solid rgba(255, 255, 255, 0.95);
   z-index: 2;
-}
-
-/* 对话框淡入动画 */
-@keyframes dialogFadeIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px) scale(0.8);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0) scale(1);
-  }
 }
 
 /* 响应式设计 */

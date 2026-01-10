@@ -2,7 +2,8 @@
  * useImagePreload.js - 图片预加载逻辑组合式函数
  * 封装项目中可复用的图片预加载功能
  */
-import { ref } from 'vue'
+import { ref } from "vue";
+import { imageApi } from "../services/apiService";
 
 /**
  * 图片预加载组合式函数
@@ -11,54 +12,45 @@ export default function useImagePreload() {
   /**
    * 预加载图片缓存
    */
-  const preloadedImages = ref({})
+  const preloadedImages = ref({});
 
   /**
    * 图片尺寸缓存
    */
-  const imageDimensions = ref({})
+  const imageDimensions = ref({});
 
   /**
    * 加载状态管理
    */
-  const imagesLoaded = ref(false)
+  const imagesLoaded = ref(false);
 
   /**
    * 图片加载进度
    */
-  const loadingProgress = ref(0)
+  const loadingProgress = ref(0);
 
   /**
    * 预加载单个图片
    * @param {string} imgSrc - 图片路径
    * @returns {Promise} 图片加载完成的Promise
    */
-  const preloadImage = (imgSrc) => {
-    // 如果图片已经预加载，直接返回
+  const preloadImage = async (imgSrc) => {
     if (preloadedImages.value[imgSrc]) {
-      return Promise.resolve()
+      return Promise.resolve();
     }
 
-    return new Promise((resolve) => {
-      const img = new Image()
-      img.src = imgSrc
-      img.onload = () => {
-        // 将加载的图片添加到缓存中
-        preloadedImages.value[imgSrc] = img
-        // 记录图片尺寸
-        imageDimensions.value[imgSrc] = {
-          width: img.width,
-          height: img.height
-        }
-        resolve()
-      }
-      img.onerror = () => {
-        // 即使加载失败也继续
-        preloadedImages.value[imgSrc] = null // 标记为加载失败
-        resolve()
-      }
-    })
-  }
+    try {
+      const img = await imageApi.preloadImage(imgSrc);
+      preloadedImages.value[imgSrc] = img;
+      imageDimensions.value[imgSrc] = {
+        width: img.width,
+        height: img.height,
+      };
+    } catch (error) {
+      console.error(`图片加载失败: ${imgSrc}`, error);
+      preloadedImages.value[imgSrc] = null;
+    }
+  };
 
   /**
    * 预加载多个图片
@@ -67,36 +59,36 @@ export default function useImagePreload() {
    */
   const preloadImages = async (imgSrcs) => {
     if (!Array.isArray(imgSrcs) || imgSrcs.length === 0) {
-      imagesLoaded.value = true
-      return Promise.resolve()
+      imagesLoaded.value = true;
+      return Promise.resolve();
     }
 
     // 过滤掉已经预加载的图片
-    const imagesToLoad = imgSrcs.filter(src => !preloadedImages.value[src])
-    const totalImages = imagesToLoad.length
+    const imagesToLoad = imgSrcs.filter((src) => !preloadedImages.value[src]);
+    const totalImages = imagesToLoad.length;
 
     if (totalImages === 0) {
-      imagesLoaded.value = true
-      return Promise.resolve()
+      imagesLoaded.value = true;
+      return Promise.resolve();
     }
 
-    imagesLoaded.value = false
-    loadingProgress.value = 0
+    imagesLoaded.value = false;
+    loadingProgress.value = 0;
 
     // 并行预加载所有图片，提高性能
-    const preloadPromises = imagesToLoad.map(img => preloadImage(img))
+    const preloadPromises = imagesToLoad.map((img) => preloadImage(img));
 
     // 跟踪加载进度
-    let loadedCount = 0
+    let loadedCount = 0;
     for (const promise of preloadPromises) {
-      await promise
-      loadedCount++
-      loadingProgress.value = Math.round((loadedCount / totalImages) * 100)
+      await promise;
+      loadedCount++;
+      loadingProgress.value = Math.round((loadedCount / totalImages) * 100);
     }
 
-    imagesLoaded.value = true
-    return Promise.resolve()
-  }
+    imagesLoaded.value = true;
+    return Promise.resolve();
+  };
 
   /**
    * 从时间轴项目中提取所有图片URL
@@ -105,17 +97,17 @@ export default function useImagePreload() {
    */
   const extractImagesFromTimeline = (timelineItems) => {
     if (!Array.isArray(timelineItems) || timelineItems.length === 0) {
-      return []
+      return [];
     }
 
     // 从每个项目中提取所有图片URL
-    const imageUrls = timelineItems.flatMap(item => {
-      return Array.isArray(item.images) ? item.images : []
-    })
+    const imageUrls = timelineItems.flatMap((item) => {
+      return Array.isArray(item.images) ? item.images : [];
+    });
 
     // 去重
-    return [...new Set(imageUrls)]
-  }
+    return [...new Set(imageUrls)];
+  };
 
   /**
    * 检查图片是否已预加载
@@ -123,8 +115,8 @@ export default function useImagePreload() {
    * @returns {boolean} 是否已预加载
    */
   const isImagePreloaded = (imgSrc) => {
-    return !!preloadedImages.value[imgSrc]
-  }
+    return !!preloadedImages.value[imgSrc];
+  };
 
   /**
    * 获取图片尺寸
@@ -132,18 +124,18 @@ export default function useImagePreload() {
    * @returns {Object|null} 图片尺寸对象 {width, height} 或 null
    */
   const getImageDimensions = (imgSrc) => {
-    return imageDimensions.value[imgSrc] || null
-  }
+    return imageDimensions.value[imgSrc] || null;
+  };
 
   /**
    * 清空预加载缓存
    */
   const clearPreloadCache = () => {
-    preloadedImages.value = {}
-    imageDimensions.value = {}
-    imagesLoaded.value = false
-    loadingProgress.value = 0
-  }
+    preloadedImages.value = {};
+    imageDimensions.value = {};
+    imagesLoaded.value = false;
+    loadingProgress.value = 0;
+  };
 
   return {
     preloadedImages,
@@ -155,6 +147,6 @@ export default function useImagePreload() {
     extractImagesFromTimeline,
     isImagePreloaded,
     getImageDimensions,
-    clearPreloadCache
-  }
+    clearPreloadCache,
+  };
 }

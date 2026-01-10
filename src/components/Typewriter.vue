@@ -34,7 +34,8 @@
  */
 
 // 引入Vue 3 Composition API的ref和onMounted
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import gsap from 'gsap'
 
 // 定义组件属性
 const props = defineProps({
@@ -67,6 +68,13 @@ const textIndex = ref(0) // 当前文本数组的索引
 const charIndex = ref(0) // 当前文本的字符索引
 const timer = ref(null) // 打字动画定时器
 const showStartButton = ref(false) // 是否显示开始回忆按钮
+const accumulatedText = ref('') // 累积的文本内容
+
+// 动画管理
+let cardAnimation = null
+let buttonAnimation = null
+let cursorAnimation = null
+let capricornAnimation = null
 
 /**
  * 打字机核心逻辑
@@ -77,7 +85,7 @@ const type = () => {
 
   // 逐字显示当前文本
   if (charIndex.value <= currentText.length) {
-    displayText.value = currentText.substring(0, charIndex.value)
+    displayText.value = accumulatedText.value + currentText.substring(0, charIndex.value)
     charIndex.value++
     timer.value = setTimeout(type, props.speed)
     return
@@ -86,11 +94,14 @@ const type = () => {
   // 检查是否为最后一段文本
   if (textIndex.value === props.texts.length - 1) {
     showStartButton.value = true // 显示开始回忆按钮
+    nextTick(() => {
+      animateButton() // 等待DOM更新后触发按钮动画
+    })
     return
   }
 
-  // 切换到下一段文本
-  displayText.value += '\n'
+  // 累积当前文本并切换到下一段文本
+  accumulatedText.value += currentText + '\n'
   textIndex.value++
   charIndex.value = 0
   timer.value = setTimeout(type, 1000) // 延迟1秒后开始显示下一段
@@ -104,15 +115,100 @@ const handleStartRecall = () => {
   emit('typewriter-complete')
 }
 
+// 卡片进入动画
+const animateCardEnter = () => {
+  const cardContent = document.querySelector('.card-content')
+  if (cardContent) {
+    cardAnimation = gsap.fromTo(cardContent,
+      {
+        opacity: 0,
+        y: 30,
+        scale: 0.95
+      },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.8,
+        ease: 'power2.out'
+      }
+    )
+  }
+}
+
+// 光标闪烁动画
+const animateCursor = () => {
+  const cursor = document.querySelector('.cursor')
+  if (cursor) {
+    cursorAnimation = gsap.to(cursor, {
+      opacity: 0,
+      duration: 0.5,
+      repeat: -1,
+      yoyo: true,
+      ease: 'power1.inOut'
+    })
+  }
+}
+
+// 按钮淡入动画
+const animateButton = () => {
+  const startButton = document.querySelector('.start-button')
+  if (startButton) {
+    buttonAnimation = gsap.fromTo(startButton,
+      {
+        opacity: 0,
+        y: 30
+      },
+      {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        delay: 0.3,
+        ease: 'power2.out'
+      }
+    )
+  }
+}
+
+// 魔羯座元素浮动动画
+const animateCapricorn = () => {
+  const capricorn = document.querySelector('.capricorn-element')
+  if (capricorn) {
+    capricornAnimation = gsap.to(capricorn, {
+      y: -20,
+      rotation: 5,
+      duration: 3,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    })
+  }
+}
+
 // 组件挂载后开始打字效果
 onMounted(() => {
   type()
+  animateCardEnter()
+  animateCursor()
+  animateCapricorn()
 })
 
-// 组件卸载前清除定时器，避免内存泄漏
+// 组件卸载前清除定时器和动画，避免内存泄漏
 onUnmounted(() => {
   if (timer.value) {
     clearTimeout(timer.value)
+  }
+  if (cardAnimation) {
+    cardAnimation.kill()
+  }
+  if (buttonAnimation) {
+    buttonAnimation.kill()
+  }
+  if (cursorAnimation) {
+    cursorAnimation.kill()
+  }
+  if (capricornAnimation) {
+    capricornAnimation.kill()
   }
 })
 </script>
@@ -145,7 +241,6 @@ onUnmounted(() => {
   width: 100%;
   padding: $spacing-2xl $spacing-lg;
   text-align: center;
-  animation: cardEnter 0.8s ease-out;
   transition: all 0.5s ease;
 }
 
@@ -166,7 +261,6 @@ h1 {
 .cursor {
   font-size: $font-size-4xl;
   color: $text-light;
-  animation: blink 1s infinite;
   vertical-align: bottom;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   transition: opacity 0.3s ease;
@@ -191,7 +285,6 @@ h1 {
   transition: all $transition-fast !important;
   box-shadow: $shadow-md !important;
   opacity: 0;
-  animation: fadeInUp 0.6s ease forwards 0.3s;
   // 覆盖Element Plus按钮默认样式
   --el-button-text-color: $primary-color !important;
   --el-button-bg-color: rgba(255, 255, 255, 0.9) !important;
@@ -213,59 +306,8 @@ h1 {
   top: 20%;
   right: 10%;
   opacity: 0.3;
-  animation: float 6s ease-in-out infinite;
   z-index: 1;
   transition: all 0.8s ease;
-}
-
-// 增强的动画效果
-@keyframes cardEnter {
-  0% {
-    opacity: 0;
-    transform: translateY(30px) scale(0.95);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes blink {
-
-  0%,
-  50% {
-    opacity: 1;
-  }
-
-  51%,
-  100% {
-    opacity: 0;
-  }
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-20px) rotate(5deg);
-  }
 }
 
 /* 响应式设计 */

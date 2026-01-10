@@ -28,7 +28,8 @@
 
 <script setup>
 // 引入Vue 3 Composition API的核心函数
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import gsap from 'gsap'
 
 /**
  * 定义组件事件
@@ -36,6 +37,14 @@ import { ref, onMounted } from 'vue'
 const emit = defineEmits([
   'close-modal' // 关闭模态框事件
 ])
+
+// 动画管理
+let overlayAnimation = null
+let contentAnimation = null
+let headerAnimation = null
+let paragraphAnimations = []
+let capricornAnimation = null
+let buttonAnimation = null
 
 /**
  * 处理关闭按钮点击事件
@@ -56,6 +65,167 @@ const handleOverlayClick = (e) => {
     emit('close-modal') // 触发关闭事件
   }
 }
+
+// 模态框遮罩层淡入动画
+const animateOverlay = () => {
+  const overlay = document.querySelector('.modal-overlay')
+  if (overlay) {
+    overlayAnimation = gsap.fromTo(overlay,
+      {
+        opacity: 0,
+        visibility: 'hidden'
+      },
+      {
+        opacity: 1,
+        visibility: 'visible',
+        duration: 0.5,
+        ease: 'power2.out'
+      }
+    )
+  }
+}
+
+// 模态框内容进入动画
+const animateContent = () => {
+  const content = document.querySelector('.modal-content')
+  if (content) {
+    contentAnimation = gsap.fromTo(content,
+      {
+        y: -30,
+        scale: 0.95,
+        opacity: 0
+      },
+      {
+        y: 0,
+        scale: 1,
+        opacity: 1,
+        duration: 0.5,
+        ease: 'back.out(1.7)'
+      }
+    )
+  }
+}
+
+// 标题淡入动画
+const animateHeader = () => {
+  const header = document.querySelector('.modal-header h2')
+  if (header) {
+    headerAnimation = gsap.fromTo(header,
+      {
+        y: -20,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        delay: 0.2,
+        ease: 'power2.out'
+      }
+    )
+  }
+}
+
+// 段落淡入动画
+const animateParagraphs = () => {
+  const paragraphs = document.querySelectorAll('.modal-body p')
+  paragraphAnimations = []
+
+  paragraphs.forEach((p, index) => {
+    const anim = gsap.fromTo(p,
+      {
+        y: 20,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.6,
+        delay: 0.4 + (index * 0.2),
+        ease: 'power2.out'
+      }
+    )
+    paragraphAnimations.push(anim)
+  })
+}
+
+// 魔羯座元素动画
+const animateCapricorn = () => {
+  const capricorn = document.querySelector('.capricorn-modal')
+  if (capricorn) {
+    const tl = gsap.timeline()
+
+    tl.fromTo(capricorn,
+      {
+        scale: 0.8,
+        opacity: 0
+      },
+      {
+        scale: 1,
+        opacity: 1,
+        duration: 0.8,
+        delay: 1.2,
+        ease: 'back.out(1.7)'
+      }
+    )
+
+    tl.to(capricorn, {
+      y: -20,
+      rotation: 5,
+      duration: 3,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    }, '+=0.8')
+
+    capricornAnimation = tl
+  }
+}
+
+// 按钮淡入动画
+const animateButton = () => {
+  const button = document.querySelector('#close-modal')
+  if (button) {
+    buttonAnimation = gsap.fromTo(button,
+      {
+        y: 30,
+        opacity: 0
+      },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 0.8,
+        delay: 1.4,
+        ease: 'power2.out'
+      }
+    )
+  }
+}
+
+// 初始化所有动画
+const initAnimations = () => {
+  animateOverlay()
+  animateContent()
+  animateHeader()
+  animateParagraphs()
+  animateCapricorn()
+  animateButton()
+}
+
+// 组件挂载时初始化动画
+onMounted(() => {
+  initAnimations()
+})
+
+// 组件卸载时清理动画
+onUnmounted(() => {
+  if (overlayAnimation) overlayAnimation.kill()
+  if (contentAnimation) contentAnimation.kill()
+  if (headerAnimation) headerAnimation.kill()
+  paragraphAnimations.forEach(anim => anim.kill())
+  if (capricornAnimation) capricornAnimation.kill()
+  if (buttonAnimation) buttonAnimation.kill()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -73,7 +243,6 @@ const handleOverlayClick = (e) => {
   backdrop-filter: blur(5px);
   align-items: center;
   justify-content: center;
-  transition: opacity 0.5s ease, visibility 0.5s ease;
   opacity: 1;
   visibility: visible;
 }
@@ -90,7 +259,6 @@ const handleOverlayClick = (e) => {
   max-width: 600px;
   width: 90%;
   position: relative;
-  transition: all 0.5s ease;
   transform: translateY(0) scale(1);
   box-shadow: $shadow-2xl;
 }
@@ -109,9 +277,6 @@ const handleOverlayClick = (e) => {
   text-align: center;
   font-weight: 700;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  animation: fadeInDown 0.6s ease forwards 0.2s;
-  opacity: 0;
-  transform: translateY(-20px);
 }
 
 .modal-body {
@@ -126,24 +291,9 @@ const handleOverlayClick = (e) => {
   margin-bottom: $spacing-lg;
   text-align: center;
   font-weight: 500;
-  opacity: 0;
-  transform: translateY(20px);
-}
-
-.modal-body p:nth-child(1) {
-  animation: fadeInUp 0.6s ease forwards 0.4s;
-}
-
-.modal-body p:nth-child(2) {
-  animation: fadeInUp 0.6s ease forwards 0.6s;
-}
-
-.modal-body p:nth-child(3) {
-  animation: fadeInUp 0.6s ease forwards 0.8s;
 }
 
 .modal-body p:nth-child(4) {
-  animation: fadeInUp 0.6s ease forwards 1.0s;
   margin-bottom: 0;
   font-weight: bold;
   color: $primary-color;
@@ -153,9 +303,6 @@ const handleOverlayClick = (e) => {
 .capricorn-modal {
   text-align: center;
   margin: $spacing-xl 0;
-  animation: fadeInScale 0.8s ease forwards 1.2s, float 6s ease-in-out infinite 2s;
-  opacity: 0;
-  transform: scale(0.8);
 }
 
 
@@ -181,64 +328,11 @@ const handleOverlayClick = (e) => {
   --el-button-hover-bg-color: $primary-gradient !important;
   --el-button-hover-border-color: transparent !important;
   --el-button-hover-text-color: $text-light !important;
-  animation: fadeInUp 0.8s ease forwards 1.4s;
-  opacity: 0;
-  transform: translateY(30px);
 }
 
 #close-modal:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 35px rgba(102, 126, 234, 0.6);
-}
-
-/* 响应式设计 */
-/* 关键帧动画定义 */
-@keyframes fadeInDown {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInUp {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInScale {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0) rotate(0deg);
-  }
-
-  50% {
-    transform: translateY(-20px) rotate(5deg);
-  }
 }
 
 /* 响应式设计 */
