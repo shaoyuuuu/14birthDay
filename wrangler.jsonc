@@ -1,0 +1,7 @@
+{
+  "name": "birthday-wish",
+  "compatibility_date": "2026-01-10",
+  "assets": {
+    "directory": "./dist"
+  }
+}
