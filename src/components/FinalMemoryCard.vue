@@ -89,6 +89,43 @@ const isEnvelopeOpened = ref(false)
 let enterAnimations = []
 let envelopeAnimation = null
 
+const ANIMATION_CONFIG = {
+  cardEnter: {
+    opacity: 1,
+    y: 0,
+    duration: 0.8,
+    ease: 'power2.out',
+    staggerDelay: 0.15
+  },
+  envelope: {
+    flapRotation: -180,
+    flapDuration: 0.8,
+    flapEase: 'power2.inOut',
+    letterY: -200,
+    letterRotation: -5,
+    letterDuration: 1.2,
+    letterDelay: 0.3,
+    letterScale: 1.05,
+    letterScaleDuration: 0.3,
+    letterScaleEase: 'power2.out'
+  },
+  inkSplatter: {
+    opacity: 0.6,
+    scale: 1,
+    duration: 1.5,
+    delay: 0.5,
+    ease: 'power2.out'
+  },
+  closeEnvelope: {
+    letterOpacity: 0,
+    letterDuration: 0.8,
+    letterEase: 'power2.in',
+    flapDuration: 0.6,
+    flapEase: 'power2.inOut',
+    flapDelay: 0.4
+  }
+}
+
 const toggleEnvelope = () => {
   if (!isEnvelopeOpened.value) {
     openEnvelope()
@@ -123,16 +160,16 @@ const closeEnvelope = () => {
     y: 0,
     rotation: 0,
     scale: 1,
-    opacity: 0,
-    duration: 0.8,
-    ease: 'power2.in'
+    opacity: ANIMATION_CONFIG.closeEnvelope.letterOpacity,
+    duration: ANIMATION_CONFIG.closeEnvelope.letterDuration,
+    ease: ANIMATION_CONFIG.closeEnvelope.letterEase
   })
 
   timeline.to(envelopeFlap.value, {
     rotationX: 0,
-    duration: 0.6,
-    ease: 'power2.inOut'
-  }, '-=0.4')
+    duration: ANIMATION_CONFIG.closeEnvelope.flapDuration,
+    ease: ANIMATION_CONFIG.closeEnvelope.flapEase
+  }, `-= ${ANIMATION_CONFIG.closeEnvelope.flapDelay}`)
 
   envelopeAnimation = timeline
 }
@@ -141,24 +178,24 @@ const animateEnvelopeOpening = () => {
   const timeline = gsap.timeline()
 
   timeline.to(envelopeFlap.value, {
-    rotationX: -180,
-    duration: 0.8,
-    ease: 'power2.inOut'
+    rotationX: ANIMATION_CONFIG.envelope.flapRotation,
+    duration: ANIMATION_CONFIG.envelope.flapDuration,
+    ease: ANIMATION_CONFIG.envelope.flapEase
   })
 
   timeline.to(letterRef.value, {
-    y: -200,
-    rotation: -5,
-    duration: 1.2,
+    y: ANIMATION_CONFIG.envelope.letterY,
+    rotation: ANIMATION_CONFIG.envelope.letterRotation,
+    duration: ANIMATION_CONFIG.envelope.letterDuration,
     ease: 'power2.out',
-    delay: 0.3
+    delay: ANIMATION_CONFIG.envelope.letterDelay
   }, '-=0.4')
 
   timeline.to(letterRef.value, {
-    scale: 1.05,
+    scale: ANIMATION_CONFIG.envelope.letterScale,
     rotation: 0,
-    duration: 0.3,
-    ease: 'power2.out'
+    duration: ANIMATION_CONFIG.envelope.letterScaleDuration,
+    ease: ANIMATION_CONFIG.envelope.letterScaleEase
   })
 }
 
@@ -172,11 +209,11 @@ const animateCardEnter = () => {
         y: 30
       },
       {
-        opacity: 1,
-        y: 0,
-        duration: 0.8,
-        ease: 'power2.out',
-        delay: index * 0.15
+        opacity: ANIMATION_CONFIG.cardEnter.opacity,
+        y: ANIMATION_CONFIG.cardEnter.y,
+        duration: ANIMATION_CONFIG.cardEnter.duration,
+        ease: ANIMATION_CONFIG.cardEnter.ease,
+        delay: index * ANIMATION_CONFIG.cardEnter.staggerDelay
       }
     )
     enterAnimations.push(anim)
@@ -188,11 +225,11 @@ const animateCardEnter = () => {
       scale: 0.8
     },
     {
-      opacity: 0.6,
-      scale: 1,
-      duration: 1.5,
-      ease: 'power2.out',
-      delay: 0.5
+      opacity: ANIMATION_CONFIG.inkSplatter.opacity,
+      scale: ANIMATION_CONFIG.inkSplatter.scale,
+      duration: ANIMATION_CONFIG.inkSplatter.duration,
+      ease: ANIMATION_CONFIG.inkSplatter.ease,
+      delay: ANIMATION_CONFIG.inkSplatter.delay
     }
   )
 }

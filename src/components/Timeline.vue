@@ -48,6 +48,8 @@ let autoPlayTimer = null
 
 const ANIMATION_DURATION = 0.6
 const ANIMATION_EASE = 'power2.inOut'
+const SWIPE_THRESHOLD = 50
+const COMPLETE_DELAY = 2000
 
 const transitionName = computed(() => {
   return slideDirection.value === 'next' ? 'slide-next' : 'slide-prev'
@@ -90,9 +92,8 @@ const handleTouchStart = (e) => {
 const handleTouchEnd = (e) => {
   const touchEndX = e.changedTouches[0].clientX
   const swipeDistance = touchEndX - touchStartX
-  const threshold = 50
 
-  if (Math.abs(swipeDistance) > threshold) {
+  if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
     swipeDistance < 0 ? nextItem() : prevItem()
   }
 }
@@ -106,7 +107,7 @@ const handleImageChange = (imgSrc, index) => {
 const checkIfAllItemsViewed = () => {
   const totalItems = props.items.length + 1
   if (currentIndex.value === totalItems - 1) {
-    setTimeout(() => emit('timeline-complete'), 2000)
+    setTimeout(() => emit('timeline-complete'), COMPLETE_DELAY)
   }
 }
 

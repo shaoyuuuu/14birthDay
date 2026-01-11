@@ -84,7 +84,7 @@ const props = defineProps({
   },
   theme: {
     type: String,
-    default: '七七八八'
+    default: 'qiqibaba'
   }
 })
 

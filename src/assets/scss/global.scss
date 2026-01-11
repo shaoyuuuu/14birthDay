@@ -1,6 +1,5 @@
 @use "./_variables" as *;
 
-// 全局重置样式
 * {
   margin: 0;
   padding: 0;
@@ -10,7 +9,6 @@
 body {
   font-family: $font-family;
   color: $text-primary;
-  // 绿色小清新主题背景 - 使用多层次渐变和纹理
   background: linear-gradient(
       135deg,
       rgba(240, 255, 240, 0.9) 0%,
@@ -18,7 +16,6 @@ body {
       rgba(220, 240, 220, 0.98) 60%,
       rgba(200, 247, 197, 0.95) 100%
     ),
-    // 微妙的纹理效果
     radial-gradient(
         circle at 10% 20%,
         rgba(102, 187, 106, 0.05) 0%,
@@ -29,7 +26,6 @@ body {
       rgba(165, 214, 167, 0.08) 0%,
       transparent 50%
     ),
-    // 细微的网格纹理
     repeating-linear-gradient(
         45deg,
         transparent,
@@ -41,11 +37,9 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   background-attachment: fixed;
-  // 添加全局柔和的阴影效果
   box-shadow: inset 0 0 100px rgba(102, 187, 106, 0.1);
 }
 
-// 全局动画
 @keyframes sectionEnter {
   from {
     opacity: 0;
@@ -57,7 +51,6 @@ body {
   }
 }
 
-// 滚动条样式
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;

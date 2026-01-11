@@ -115,11 +115,7 @@ onMounted(() => {
         }
       })
     },
-    {
-      root: null,
-      rootMargin: '0px',
-      threshold: 0.1
-    }
+    OBSERVER_CONFIG
   )
 
   if (cardRef.value) {
@@ -133,6 +129,71 @@ onUnmounted(() => {
   }
   stopAnimations()
 })
+
+const ANIMATION_CONFIG = {
+  ink: {
+    scale: 1.1,
+    opacity: 0.8,
+    duration: 2,
+    delayMultiplier: 1.5
+  },
+  dateIcon: {
+    y: -3,
+    rotation: 10,
+    duration: 1
+  },
+  footerSticker: {
+    y: -6,
+    rotation: 5,
+    duration: 2
+  },
+  doodle: {
+    rotation: 360,
+    duration: 15
+  },
+  text: {
+    duration: 0.5,
+    stagger: 0.05
+  },
+  title: {
+    duration: 0.8,
+    ease: 'back.out(1.7)',
+    y: -30,
+    scale: 0.9
+  },
+  date: {
+    duration: 0.6,
+    ease: 'power2.out',
+    x: -20,
+    delay: 0.2
+  },
+  image: {
+    duration: 0.9,
+    ease: 'back.out(1.2)',
+    y: 30,
+    scale: 0.95,
+    rotationX: 15,
+    delay: 0.3
+  },
+  description: {
+    duration: 0.7,
+    ease: 'power2.out',
+    y: 20,
+    delay: 0.4
+  },
+  footer: {
+    duration: 0.6,
+    ease: 'power2.out',
+    y: 30,
+    delay: 0.6
+  }
+}
+
+const OBSERVER_CONFIG = {
+  root: null,
+  rootMargin: '0px',
+  threshold: 0.1
+}
 
 const startAnimations = () => {
   animateInkSplatters()
@@ -168,13 +229,13 @@ const animateInkSplatters = () => {
 
   inkSplatters.forEach((ink, index) => {
     const anim = gsap.to(ink, {
-      scale: 1.1,
-      opacity: 0.8,
-      duration: 2,
+      scale: ANIMATION_CONFIG.ink.scale,
+      opacity: ANIMATION_CONFIG.ink.opacity,
+      duration: ANIMATION_CONFIG.ink.duration,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut',
-      delay: index * 1.5
+      delay: index * ANIMATION_CONFIG.ink.delayMultiplier
     })
     inkAnimations.push(anim)
   })
@@ -184,9 +245,9 @@ const animateDateIcon = () => {
   const dateIcon = document.querySelector('.date-icon')
   if (dateIcon) {
     dateIconAnimation = gsap.to(dateIcon, {
-      y: -3,
-      rotation: 10,
-      duration: 1,
+      y: ANIMATION_CONFIG.dateIcon.y,
+      rotation: ANIMATION_CONFIG.dateIcon.rotation,
+      duration: ANIMATION_CONFIG.dateIcon.duration,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut'
@@ -198,9 +259,9 @@ const animateFooterSticker = () => {
   const footerSticker = document.querySelector('.footer-sticker')
   if (footerSticker) {
     footerStickerAnimation = gsap.to(footerSticker, {
-      y: -6,
-      rotation: 5,
-      duration: 2,
+      y: ANIMATION_CONFIG.footerSticker.y,
+      rotation: ANIMATION_CONFIG.footerSticker.rotation,
+      duration: ANIMATION_CONFIG.footerSticker.duration,
       repeat: -1,
       yoyo: true,
       ease: 'sine.inOut'
@@ -212,8 +273,8 @@ const animateDoodle = () => {
   const doodle = document.querySelector('.footer-doodle')
   if (doodle) {
     doodleAnimation = gsap.to(doodle, {
-      rotation: 360,
-      duration: 15,
+      rotation: ANIMATION_CONFIG.doodle.rotation,
+      duration: ANIMATION_CONFIG.doodle.duration,
       repeat: -1,
       ease: 'none'
     })
@@ -244,9 +305,9 @@ const animateTextElements = () => {
       gsap.to(charElements, {
         opacity: 1,
         y: 0,
-        duration: 0.5,
+        duration: ANIMATION_CONFIG.text.duration,
         ease: 'power2.out',
-        stagger: 0.05
+        stagger: ANIMATION_CONFIG.text.stagger
       })
     }
   })
@@ -258,15 +319,15 @@ const animateTitleSection = () => {
   const anim = gsap.fromTo(titleSectionRef.value,
     {
       opacity: 0,
-      y: -30,
-      scale: 0.9
+      y: ANIMATION_CONFIG.title.y,
+      scale: ANIMATION_CONFIG.title.scale
     },
     {
       opacity: 1,
       y: 0,
       scale: 1,
-      duration: 0.8,
-      ease: 'back.out(1.7)'
+      duration: ANIMATION_CONFIG.title.duration,
+      ease: ANIMATION_CONFIG.title.ease
     }
   )
   elementAnimations.push(anim)
@@ -278,14 +339,14 @@ const animateDate = () => {
   const anim = gsap.fromTo(dateRef.value,
     {
       opacity: 0,
-      x: -20
+      x: ANIMATION_CONFIG.date.x
     },
     {
       opacity: 1,
       x: 0,
-      duration: 0.6,
-      ease: 'power2.out',
-      delay: 0.2
+      duration: ANIMATION_CONFIG.date.duration,
+      ease: ANIMATION_CONFIG.date.ease,
+      delay: ANIMATION_CONFIG.date.delay
     }
   )
   elementAnimations.push(anim)
@@ -297,18 +358,18 @@ const animateImageSection = () => {
   const anim = gsap.fromTo(imageSectionRef.value,
     {
       opacity: 0,
-      y: 30,
-      scale: 0.95,
-      rotationX: 15
+      y: ANIMATION_CONFIG.image.y,
+      scale: ANIMATION_CONFIG.image.scale,
+      rotationX: ANIMATION_CONFIG.image.rotationX
     },
     {
       opacity: 1,
       y: 0,
       scale: 1,
       rotationX: 0,
-      duration: 0.9,
-      ease: 'back.out(1.2)',
-      delay: 0.3
+      duration: ANIMATION_CONFIG.image.duration,
+      ease: ANIMATION_CONFIG.image.ease,
+      delay: ANIMATION_CONFIG.image.delay
     }
   )
   elementAnimations.push(anim)
@@ -320,14 +381,14 @@ const animateDescription = () => {
   const anim = gsap.fromTo(descriptionRef.value,
     {
       opacity: 0,
-      y: 20
+      y: ANIMATION_CONFIG.description.y
     },
     {
       opacity: 1,
       y: 0,
-      duration: 0.7,
-      ease: 'power2.out',
-      delay: 0.4
+      duration: ANIMATION_CONFIG.description.duration,
+      ease: ANIMATION_CONFIG.description.ease,
+      delay: ANIMATION_CONFIG.description.delay
     }
   )
   elementAnimations.push(anim)
@@ -339,14 +400,14 @@ const animateFooter = () => {
   const anim = gsap.fromTo(footerRef.value,
     {
       opacity: 0,
-      y: 30
+      y: ANIMATION_CONFIG.footer.y
     },
     {
       opacity: 1,
       y: 0,
-      duration: 0.6,
-      ease: 'power2.out',
-      delay: 0.6
+      duration: ANIMATION_CONFIG.footer.duration,
+      ease: ANIMATION_CONFIG.footer.ease,
+      delay: ANIMATION_CONFIG.footer.delay
     }
   )
   elementAnimations.push(anim)

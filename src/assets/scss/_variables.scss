@@ -1,52 +1,43 @@
-// 颜色变量 - 绿色小清新主题
 $primary-gradient: linear-gradient(135deg, #81c784 0%, #66bb6a 100%);
 $typewriter-bg: linear-gradient(135deg, #f1f8e9 0%, #e8f5e8 100%);
 $timeline-bg: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
 $modal-gradient: linear-gradient(135deg, #aed581 0%, #81c784 100%);
 
-// 主色调
 $primary-color: #66bb6a;
 $secondary-color: #81c784;
 $accent-color: #aed581;
 
-// 文字颜色 - 确保不是所有文字都是绿色
-$text-primary: #212121; // 主要文字使用深灰色
-$text-secondary: #616161; // 次要文字使用中灰色
-$text-light: #ffffff; // 浅色文字
-$text-accent: #388e3c; // 强调文字使用深绿色
+$text-primary: #212121;
+$text-secondary: #616161;
+$text-light: #ffffff;
+$text-accent: #388e3c;
 
-// 背景颜色
 $background-light: rgba(255, 255, 255, 0.98);
 $background-secondary: #f1f8e9;
 $background-accent: #e8f5e8;
 
-// 边框和阴影颜色
 $border-color: #c8e6c9;
 $shadow-color: rgba(0, 0, 0, 0.1);
 $shadow-hover: rgba(0, 0, 0, 0.15);
 
-// 字体变量
 $font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
-// 使用vw单位实现响应式字体大小，确保移动端字体足够大
-$font-size-xs: max(12px, 0.8vw); // 最小12px
-$font-size-sm: max(14px, 1vw); // 最小14px
-$font-size-md: max(16px, 1.1vw); // 最小16px
-$font-size-lg: max(18px, 1.2vw); // 最小18px
-$font-size-xl: max(22px, 1.5vw); // 最小22px
-$font-size-2xl: max(28px, 2vw); // 最小28px
-$font-size-3xl: max(34px, 2.5vw); // 最小34px
-$font-size-4xl: max(40px, 3vw); // 最小40px
+$font-size-xs: max(12px, 0.8vw);
+$font-size-sm: max(14px, 1vw);
+$font-size-md: max(16px, 1.1vw);
+$font-size-lg: max(18px, 1.2vw);
+$font-size-xl: max(22px, 1.5vw);
+$font-size-2xl: max(28px, 2vw);
+$font-size-3xl: max(34px, 2.5vw);
+$font-size-4xl: max(40px, 3vw);
 
-// 间距变量 - 使用vw和vh单位，保持紧凑的元素间距
-$spacing-xs: max(4px, 0.25vw); // 最小4px
-$spacing-sm: max(8px, 0.5vw); // 最小8px
-$spacing-md: max(12px, 0.8vw); // 最小12px
-$spacing-lg: max(16px, 1.2vw); // 最小16px
-$spacing-xl: max(20px, 1.5vw); // 最小20px
-$spacing-2xl: max(24px, 1.8vw); // 最小24px
-$spacing-3xl: max(30px, 2.2vw); // 最小30px
+$spacing-xs: max(4px, 0.25vw);
+$spacing-sm: max(8px, 0.5vw);
+$spacing-md: max(12px, 0.8vw);
+$spacing-lg: max(16px, 1.2vw);
+$spacing-xl: max(20px, 1.5vw);
+$spacing-2xl: max(24px, 1.8vw);
+$spacing-3xl: max(30px, 2.2vw);
 
-// 圆角变量 - 使用vw单位
 $border-radius-sm: 0.2vw;
 $border-radius-md: 0.4vw;
 $border-radius-lg: 1vw;
@@ -54,35 +45,29 @@ $border-radius-xl: 1.5vw;
 $border-radius-2xl: 2vw;
 $border-radius-full: 5vw;
 
-// 阴影变量 - 使用vw单位
 $shadow-sm: 0 0.5vw 1.5vw rgba(0, 0, 0, 0.1);
 $shadow-md: 0 0.8vw 2.5vw rgba(0, 0, 0, 0.2);
 $shadow-lg: 0 1vw 3vw rgba(0, 0, 0, 0.1);
 $shadow-xl: 0 2vw 4vw rgba(0, 0, 0, 0.15);
 $shadow-2xl: 0 2vw 6vw rgba(0, 0, 0, 0.3);
 
-// 动画变量
 $transition-fast: 0.3s ease;
 $transition-normal: 0.6s ease;
 $transition-slow: 1s ease;
 
-// 打字机速度变量
 $typewriter-speed: 100ms;
 $typewriter-delete-speed: 50ms;
 $typewriter-delay: 1500ms;
 
-// 响应式断点
 $breakpoint-sm: 480px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 1024px;
 $breakpoint-xl: 1200px;
 
-// 火柴人进度条变量 - 使用vw和vh单位
 $stick-figure-size: 5vw;
 $progress-track-height: 0.4vh;
 $progress-track-color: rgba(255, 255, 255, 0.3);
 
-// 缩略图变量 - 使用vw单位
 $thumbnail-size: 8vw;
 $thumbnail-gap: 1vw;
 $thumbnail-active-border: 0.3vw solid white;
