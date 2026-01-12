@@ -1,22 +1,22 @@
 export const themeConfigs = {
   七七八八: {
     colors: {
-      primary: '#ff6b9d',
-      secondary: '#ff8fb1',
-      background: 'rgba(255, 107, 157, 0.12)',
-      accent: '#ff4081',
+      primary: '#ff8a65',
+      secondary: '#ffab91',
+      background: 'rgba(255, 138, 101, 0.15)',
+      accent: '#ff7043',
       pageBackground:
-        'linear-gradient(135deg, rgba(255, 182, 193, 0.25) 0%, rgba(255, 218, 233, 0.15) 50%, rgba(255, 192, 203, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(255, 171, 145, 0.35) 0%, rgba(255, 224, 178, 0.25) 50%, rgba(255, 138, 101, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#ff6b9d',
+      color: '#ff8a65',
     },
     decor: {
       pattern: 'dots',
-      paperTexture: 'subtle',
-      stickers: ['🌸', '✨', '🎀'],
-      handDrawn: ['circle', 'heart'],
+      paperTexture: 'warm',
+      stickers: ['🍵', '🎬', '🎮', '🌟', '💕'],
+      handDrawn: ['heart', 'star', 'wave'],
       cornerDecor: 'rounded',
     },
     layout: {
@@ -25,22 +25,22 @@ export const themeConfigs = {
   },
   华尖山: {
     colors: {
-      primary: '#7c4dff',
-      secondary: '#b388ff',
-      background: 'rgba(124, 77, 255, 0.12)',
-      accent: '#651fff',
+      primary: '#5c6bc0',
+      secondary: '#7986cb',
+      background: 'rgba(92, 107, 192, 0.15)',
+      accent: '#3f51b5',
       pageBackground:
-        'linear-gradient(135deg, rgba(179, 136, 255, 0.25) 0%, rgba(206, 158, 252, 0.15) 50%, rgba(224, 179, 252, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(121, 134, 203, 0.35) 0%, rgba(92, 107, 192, 0.25) 50%, rgba(63, 81, 181, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#7c4dff',
+      color: '#5c6bc0',
     },
     decor: {
       pattern: 'stars',
-      paperTexture: 'subtle',
-      stickers: ['⭐', '🌙', '🌠'],
-      handDrawn: ['star', 'arrow'],
+      paperTexture: 'dreamy',
+      stickers: ['🌠', '⭐', '🌙', '🏔️'],
+      handDrawn: ['star', 'heart'],
       cornerDecor: 'artistic',
     },
     layout: {
@@ -49,21 +49,21 @@ export const themeConfigs = {
   },
   烛光晚餐: {
     colors: {
-      primary: '#ff7043',
-      secondary: '#ff8a65',
-      background: 'rgba(255, 112, 67, 0.12)',
-      accent: '#f4511e',
+      primary: '#ff9800',
+      secondary: '#ffa726',
+      background: 'rgba(255, 152, 0, 0.15)',
+      accent: '#f57c00',
       pageBackground:
-        'linear-gradient(135deg, rgba(255, 138, 101, 0.25) 0%, rgba(255, 171, 145, 0.15) 50%, rgba(255, 205, 210, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(255, 167, 38, 0.35) 0%, rgba(255, 152, 0, 0.25) 50%, rgba(255, 183, 77, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#ff7043',
+      color: '#ff9800',
     },
     decor: {
       pattern: 'flames',
-      paperTexture: 'subtle',
-      stickers: ['🕯️', '🍷', '🌹'],
+      paperTexture: 'warm',
+      stickers: ['🕯️', '🍷', '🌹', '💕'],
       handDrawn: ['heart', 'squiggle'],
       cornerDecor: 'rounded',
     },
@@ -73,21 +73,21 @@ export const themeConfigs = {
   },
   青城山: {
     colors: {
-      primary: '#66bb6a',
-      secondary: '#81c784',
-      background: 'rgba(102, 187, 106, 0.12)',
-      accent: '#43a047',
+      primary: '#4caf50',
+      secondary: '#66bb6a',
+      background: 'rgba(76, 175, 80, 0.15)',
+      accent: '#388e3c',
       pageBackground:
-        'linear-gradient(135deg, rgba(129, 199, 132, 0.25) 0%, rgba(165, 214, 167, 0.15) 50%, rgba(200, 230, 201, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(102, 187, 106, 0.35) 0%, rgba(76, 175, 80, 0.25) 50%, rgba(129, 199, 132, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#66bb6a',
+      color: '#4caf50',
     },
     decor: {
       pattern: 'bamboo',
-      paperTexture: 'subtle',
-      stickers: ['🎋', '🌿', '🍃'],
+      paperTexture: 'natural',
+      stickers: ['🎋', '🌿', '🍃', '🌳'],
       handDrawn: ['leaf', 'doodle'],
       cornerDecor: 'artistic',
     },
@@ -145,23 +145,23 @@ export const themeConfigs = {
   },
   做戒指: {
     colors: {
-      primary: '#ffd700',
-      secondary: '#ffec8b',
-      background: 'rgba(255, 215, 0, 0.12)',
-      accent: '#ffb300',
+      primary: '#e8b4b8',
+      secondary: '#f5d0d5',
+      background: 'rgba(232, 180, 184, 0.18)',
+      accent: '#d4a5a5',
       pageBackground:
-        'linear-gradient(135deg, rgba(255, 236, 139, 0.25) 0%, rgba(255, 241, 118, 0.15) 50%, rgba(255, 248, 225, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(245, 208, 213, 0.35) 0%, rgba(255, 235, 238, 0.25) 50%, rgba(232, 180, 184, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#ffd700',
+      color: '#e8b4b8',
     },
     decor: {
       pattern: 'rings',
-      paperTexture: 'subtle',
-      stickers: ['💍', '✨', '💎'],
-      handDrawn: ['heart', 'circle'],
-      cornerDecor: 'rounded',
+      paperTexture: 'warm',
+      stickers: ['💍', '✨', '💎', '💕'],
+      handDrawn: ['heart', 'circle', 'ring'],
+      cornerDecor: 'elegant',
     },
     layout: {
       contentAlignment: 'left',
@@ -217,23 +217,23 @@ export const themeConfigs = {
   },
   天府艺术馆: {
     colors: {
-      primary: '#ec407a',
-      secondary: '#f06292',
-      background: 'rgba(236, 64, 122, 0.12)',
-      accent: '#d81b60',
+      primary: '#9c27b0',
+      secondary: '#ce93d8',
+      background: 'rgba(156, 39, 176, 0.15)',
+      accent: '#ab47bc',
       pageBackground:
-        'linear-gradient(135deg, rgba(240, 98, 146, 0.25) 0%, rgba(248, 187, 208, 0.15) 50%, rgba(252, 228, 236, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(206, 147, 216, 0.35) 0%, rgba(186, 104, 200, 0.25) 50%, rgba(156, 39, 176, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#ec407a',
+      color: '#9c27b0',
     },
     decor: {
       pattern: 'artistic',
-      paperTexture: 'subtle',
-      stickers: ['🎨', '🖼️', '🎭'],
-      handDrawn: ['heart', 'star'],
-      cornerDecor: 'rounded',
+      paperTexture: 'elegant',
+      stickers: ['🎨', '🖼️', '🎭', '🌧️', '☂️'],
+      handDrawn: ['heart', 'star', 'rain'],
+      cornerDecor: 'elegant',
     },
     layout: {
       contentAlignment: 'left',
@@ -265,22 +265,22 @@ export const themeConfigs = {
   },
   打铁花: {
     colors: {
-      primary: '#ffca28',
-      secondary: '#ffd54f',
-      background: 'rgba(255, 202, 40, 0.12)',
-      accent: '#ffb300',
+      primary: '#ff5722',
+      secondary: '#ff7043',
+      background: 'rgba(255, 87, 34, 0.15)',
+      accent: '#e64a19',
       pageBackground:
-        'linear-gradient(135deg, rgba(255, 213, 79, 0.25) 0%, rgba(255, 238, 88, 0.15) 50%, rgba(255, 241, 118, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(255, 112, 67, 0.35) 0%, rgba(255, 87, 34, 0.25) 50%, rgba(255, 152, 0, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#ffca28',
+      color: '#ff5722',
     },
     decor: {
       pattern: 'sparks',
-      paperTexture: 'subtle',
-      stickers: ['🎆', '✨', '🔥'],
-      handDrawn: ['star', 'arrow'],
+      paperTexture: 'warm',
+      stickers: ['🎆', '✨', '🔥', '💫'],
+      handDrawn: ['star', 'heart'],
       cornerDecor: 'torn',
     },
     layout: {
@@ -313,21 +313,21 @@ export const themeConfigs = {
   },
   乐山: {
     colors: {
-      primary: '#ff8a65',
-      secondary: '#ffab91',
-      background: 'rgba(255, 138, 101, 0.12)',
-      accent: '#f4511e',
+      primary: '#ff6b35',
+      secondary: '#ff8c5a',
+      background: 'rgba(255, 107, 53, 0.15)',
+      accent: '#e63946',
       pageBackground:
-        'linear-gradient(135deg, rgba(255, 171, 145, 0.25) 0%, rgba(255, 205, 210, 0.15) 50%, rgba(255, 224, 178, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(255, 140, 90, 0.3) 0%, rgba(255, 183, 77, 0.2) 50%, rgba(255, 107, 53, 0.25) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#ff8a65',
+      color: '#ff6b35',
     },
     decor: {
       pattern: 'food',
-      paperTexture: 'subtle',
-      stickers: ['🍜', '🍢', '🍡'],
+      paperTexture: 'warm',
+      stickers: ['🍜', '🍢', '🍡', '🦆'],
       handDrawn: ['squiggle', 'circle'],
       cornerDecor: 'rounded',
     },
@@ -337,23 +337,23 @@ export const themeConfigs = {
   },
   娘娘山: {
     colors: {
-      primary: '#7e57c2',
-      secondary: '#9575cd',
-      background: 'rgba(126, 87, 194, 0.12)',
-      accent: '#5e35b1',
+      primary: '#6b5b95',
+      secondary: '#9b8fc9',
+      background: 'rgba(107, 91, 149, 0.15)',
+      accent: '#4a3f75',
       pageBackground:
-        'linear-gradient(135deg, rgba(149, 117, 205, 0.25) 0%, rgba(179, 157, 219, 0.15) 50%, rgba(206, 190, 233, 0.2) 100%)',
+        'linear-gradient(135deg, rgba(107, 91, 149, 0.35) 0%, rgba(155, 143, 201, 0.25) 50%, rgba(74, 63, 117, 0.3) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: '#7e57c2',
+      color: '#6b5b95',
     },
     decor: {
-      pattern: 'clouds',
-      paperTexture: 'subtle',
-      stickers: ['🌺', '🦋', '🌸'],
-      handDrawn: ['leaf', 'squiggle'],
-      cornerDecor: 'folded',
+      pattern: 'stars',
+      paperTexture: 'dreamy',
+      stickers: ['🌟', '🌙', '✨', '🌺'],
+      handDrawn: ['star', 'heart'],
+      cornerDecor: 'rounded',
     },
     layout: {
       contentAlignment: 'left',
