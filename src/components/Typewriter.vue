@@ -1,5 +1,18 @@
 <template>
   <div class="container">
+    <!-- 背景装饰元素 -->
+    <div class="background-decorations">
+      <div class="decoration-star star-1"></div>
+      <div class="decoration-star star-2"></div>
+      <div class="decoration-star star-3"></div>
+      <div class="decoration-star star-4"></div>
+      <div class="decoration-star star-5"></div>
+      <div class="decoration-circle circle-1"></div>
+      <div class="decoration-circle circle-2"></div>
+      <div class="decoration-glow glow-1"></div>
+      <div class="decoration-glow glow-2"></div>
+    </div>
+    
     <!-- 打字机效果容器 -->
     <div class="typewriter-container">
       <!-- 卡片内容区域 -->
@@ -10,12 +23,15 @@
         </h1>
         <!-- 开始回忆按钮，当所有文字显示完成后出现 -->
         <div class="start-button-container" v-if="showStartButton">
-          <el-button type="primary" size="large" class="start-button" @click="handleStartRecall">
-            开始回忆
-          </el-button>
+          <button class="start-button" @click="handleStartRecall">
+            <span class="button-icon">✨</span>
+            <span class="button-text">开始回忆</span>
+            <span class="button-glow"></span>
+          </button>
         </div>
       </div>
     </div>
+    
     <!-- 魔羯座元素（星座装饰） -->
     <div class="capricorn-element">
       <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -136,18 +152,47 @@ const animateCardEnter = () => {
   }
 }
 
-// 光标闪烁动画
-const animateCursor = () => {
-  const cursor = document.querySelector('.cursor')
-  if (cursor) {
-    cursorAnimation = gsap.to(cursor, {
-      opacity: 0,
-      duration: 0.5,
-      repeat: -1,
-      yoyo: true,
-      ease: 'power1.inOut'
-    })
-  }
+// 背景装饰元素进入动画
+const animateDecorations = () => {
+  const stars = document.querySelectorAll('.decoration-star')
+  const circles = document.querySelectorAll('.decoration-circle')
+  const glows = document.querySelectorAll('.decoration-glow')
+  
+  gsap.fromTo(stars,
+    { opacity: 0, scale: 0 },
+    { 
+      opacity: 1, 
+      scale: 1, 
+      duration: 0.6, 
+      stagger: 0.1, 
+      ease: 'back.out(1.7)',
+      delay: 0.3
+    }
+  )
+  
+  gsap.fromTo(circles,
+    { opacity: 0, scale: 0.8 },
+    { 
+      opacity: 1, 
+      scale: 1, 
+      duration: 0.8, 
+      stagger: 0.2, 
+      ease: 'power2.out',
+      delay: 0.5
+    }
+  )
+  
+  gsap.fromTo(glows,
+    { opacity: 0, scale: 0.5 },
+    { 
+      opacity: 1, 
+      scale: 1, 
+      duration: 1, 
+      stagger: 0.3, 
+      ease: 'power2.out',
+      delay: 0.7
+    }
+  )
 }
 
 // 按钮淡入动画
@@ -189,7 +234,7 @@ const animateCapricorn = () => {
 onMounted(() => {
   type()
   animateCardEnter()
-  animateCursor()
+  animateDecorations()
   animateCapricorn()
 })
 
@@ -203,9 +248,6 @@ onUnmounted(() => {
   }
   if (buttonAnimation) {
     buttonAnimation.kill()
-  }
-  if (cursorAnimation) {
-    cursorAnimation.kill()
   }
   if (capricornAnimation) {
     capricornAnimation.kill()
@@ -225,8 +267,137 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: $primary-gradient; // 使用主渐变色背景
+  background: $primary-gradient;
   transition: all 0.8s ease;
+}
+
+.background-decorations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.decoration-star {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  animation: twinkle 3s ease-in-out infinite;
+}
+
+.star-1 {
+  top: 15%;
+  left: 10%;
+  animation-delay: 0s;
+}
+
+.star-2 {
+  top: 25%;
+  right: 15%;
+  animation-delay: 0.5s;
+}
+
+.star-3 {
+  top: 60%;
+  left: 8%;
+  animation-delay: 1s;
+}
+
+.star-4 {
+  bottom: 20%;
+  right: 12%;
+  animation-delay: 1.5s;
+}
+
+.star-5 {
+  top: 45%;
+  left: 20%;
+  animation-delay: 2s;
+}
+
+.decoration-circle {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  animation: float 6s ease-in-out infinite;
+}
+
+.circle-1 {
+  width: 150px;
+  height: 150px;
+  top: 10%;
+  left: 5%;
+  animation-delay: 0s;
+}
+
+.circle-2 {
+  width: 100px;
+  height: 100px;
+  bottom: 15%;
+  right: 8%;
+  animation-delay: 2s;
+}
+
+.decoration-glow {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, transparent 70%);
+  animation: pulse 4s ease-in-out infinite;
+}
+
+.glow-1 {
+  width: 300px;
+  height: 300px;
+  top: 20%;
+  right: 10%;
+  animation-delay: 0s;
+}
+
+.glow-2 {
+  width: 250px;
+  height: 250px;
+  bottom: 25%;
+  left: 15%;
+  animation-delay: 2s;
+}
+
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0.3;
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+    opacity: 0.6;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
 }
 
 .typewriter-container {
@@ -242,6 +413,30 @@ onUnmounted(() => {
   padding: $spacing-2xl $spacing-lg;
   text-align: center;
   transition: all 0.5s ease;
+  position: relative;
+}
+
+.card-content::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  z-index: -1;
+  opacity: 0;
+  animation: cardGlow 3s ease-in-out infinite;
+}
+
+@keyframes cardGlow {
+  0%, 100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 h1 {
@@ -256,6 +451,27 @@ h1 {
   white-space: pre-line;
   transition: all 0.5s ease;
   opacity: 1;
+  letter-spacing: 0.02em;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+  border-radius: 2px;
+  opacity: 0;
+  animation: lineAppear 1s ease-out 2s forwards;
+}
+
+@keyframes lineAppear {
+  to {
+    opacity: 1;
+  }
 }
 
 .cursor {
@@ -264,6 +480,17 @@ h1 {
   vertical-align: bottom;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   transition: opacity 0.3s ease;
+  display: inline-block;
+  animation: cursorBlink 1s ease-in-out infinite;
+}
+
+@keyframes cursorBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
 }
 
 .start-button-container {
@@ -274,31 +501,92 @@ h1 {
 }
 
 .start-button {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: $primary-color !important;
-  border: none !important;
-  padding: $spacing-lg $spacing-3xl !important;
-  font-size: $font-size-xl !important;
-  font-weight: bold !important;
-  border-radius: $border-radius-full !important;
-  cursor: pointer !important;
-  transition: all $transition-fast !important;
-  box-shadow: $shadow-md !important;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-lg $spacing-3xl;
+  font-size: $font-size-xl;
+  font-weight: bold;
+  color: $primary-color;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.85) 100%);
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  border-radius: $border-radius-full;
+  cursor: pointer;
+  transition: all $transition-fast cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 
+    0 4px 15px rgba(0, 0, 0, 0.1),
+    0 2px 8px rgba(0, 0, 0, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
   opacity: 0;
-  // 覆盖Element Plus按钮默认样式
-  --el-button-text-color: $primary-color !important;
-  --el-button-bg-color: rgba(255, 255, 255, 0.9) !important;
-  --el-button-border-color: transparent !important;
-  --el-button-hover-bg-color: $text-light !important;
-  --el-button-hover-text-color: $primary-color !important;
-  --el-button-hover-border-color: transparent !important;
-  --el-button-active-bg-color: rgba(255, 255, 255, 0.95) !important;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.button-icon {
+  font-size: $font-size-2xl;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+.button-text {
+  position: relative;
+  z-index: 2;
+}
+
+.button-glow {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.6),
+    transparent
+  );
+  transition: left 0.6s ease;
+  z-index: 1;
 }
 
 .start-button:hover {
-  transform: translateY(-3px) scale(1.05);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
-  background: $text-light;
+  transform: translateY(-4px) scale(1.05);
+  box-shadow: 
+    0 12px 35px rgba(0, 0, 0, 0.2),
+    0 6px 20px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.95) 100%);
+  border-color: rgba(255, 255, 255, 0.9);
+}
+
+.start-button:hover .button-glow {
+  left: 100%;
+}
+
+.start-button:hover .button-icon {
+  animation: sparkle 0.8s ease-in-out infinite;
+  transform: scale(1.2) rotate(15deg);
+}
+
+.start-button:active {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 
+    0 8px 25px rgba(0, 0, 0, 0.15),
+    0 4px 15px rgba(0, 0, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+@keyframes sparkle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.1) rotate(10deg);
+  }
 }
 
 .capricorn-element {
@@ -323,8 +611,32 @@ h1 {
   }
 
   .start-button {
-    padding: $spacing-md $spacing-2xl !important;
-    font-size: $font-size-lg !important;
+    padding: $spacing-md $spacing-2xl;
+    font-size: $font-size-lg;
+  }
+
+  .button-icon {
+    font-size: $font-size-xl;
+  }
+
+  .decoration-circle.circle-1 {
+    width: 100px;
+    height: 100px;
+  }
+
+  .decoration-circle.circle-2 {
+    width: 70px;
+    height: 70px;
+  }
+
+  .decoration-glow.glow-1 {
+    width: 200px;
+    height: 200px;
+  }
+
+  .decoration-glow.glow-2 {
+    width: 180px;
+    height: 180px;
   }
 }
 
@@ -340,14 +652,43 @@ h1 {
   }
 
   .start-button {
-    padding: $spacing-sm $spacing-xl !important;
-    font-size: $font-size-md !important;
+    padding: $spacing-sm $spacing-xl;
+    font-size: $font-size-md;
+  }
+
+  .button-icon {
+    font-size: $font-size-lg;
   }
 
   .capricorn-element {
     width: 80px;
     height: 80px;
     right: 5%;
+  }
+
+  .decoration-star {
+    width: 3px;
+    height: 3px;
+  }
+
+  .decoration-circle.circle-1 {
+    width: 80px;
+    height: 80px;
+  }
+
+  .decoration-circle.circle-2 {
+    width: 50px;
+    height: 50px;
+  }
+
+  .decoration-glow.glow-1 {
+    width: 150px;
+    height: 150px;
+  }
+
+  .decoration-glow.glow-2 {
+    width: 120px;
+    height: 120px;
   }
 }
 </style>

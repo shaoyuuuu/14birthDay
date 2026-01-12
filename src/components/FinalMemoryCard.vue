@@ -4,12 +4,20 @@
       <div class="paper-texture"></div>
       <div class="ink-splatter ink-1"></div>
       <div class="ink-splatter ink-2"></div>
+      <div class="birthday-decorations">
+        <div v-for="(balloon, index) in balloons" :key="`balloon-${index}`" class="balloon"
+          :style="balloonStyles[index]">
+          {{ balloon }}
+        </div>
+        <div v-for="(star, index) in stars" :key="`star-${index}`" class="star" :style="starStyles[index]">
+          {{ star }}
+        </div>
+      </div>
     </div>
 
     <div class="card-content" ref="cardContent">
       <div class="title-section">
-        <div class="title-decoration-left"></div>
-        <div class="title-decoration-right"></div>
+        <div class="birthday-cake">🎂</div>
         <h3 class="card-number">未完待续...</h3>
         <h2 class="card-title">我们的故事还在继续</h2>
         <div class="title-underline"></div>
@@ -22,44 +30,58 @@
 
       <div class="envelope-section" ref="envelopeSection">
         <div class="envelope-container">
-          <div class="envelope" :class="{ 'opened': isEnvelopeOpened }" @click="toggleEnvelope">
-            <div class="envelope-flap" ref="envelopeFlap">
-              <div class="flap-inner"></div>
-            </div>
-            <div class="envelope-body">
+          <div class="envelope-3d" :class="{ 'opened': isEnvelopeOpened }" @click="toggleEnvelope">
+            <div class="envelope-back"></div>
+            <div class="envelope-left"></div>
+            <div class="envelope-right"></div>
+            <div class="envelope-bottom"></div>
+            <div class="envelope-front">
               <div class="envelope-text" v-if="!isEnvelopeOpened">
-                <span class="click-hint">💌</span>
                 <span class="receive-text">接收祝福</span>
               </div>
+            </div>
+            <div class="envelope-flap" ref="envelopeFlap">
+              <span class="click-hint" v-if="!isEnvelopeOpened">💌</span>
+              <div class="flap-inner"></div>
+              <div class="flap-shadow"></div>
             </div>
           </div>
 
           <transition name="letter-fly">
-            <div class="letter" v-if="isEnvelopeOpened" ref="letterRef" @click.stop="closeEnvelope">
-              <div class="letter-paper">
-                <div class="letter-lines"></div>
-                <div class="letter-content">
-                  <div class="letter-header">
-                    <span class="letter-heart">💕</span>
+            <div class="letter-3d" v-if="isEnvelopeOpened" ref="letterRef" @click.stop="closeEnvelope">
+              <div class="letter-front">
+                <div class="letter-paper">
+                  <div class="letter-lines"></div>
+                  <div class="letter-content">
+                    <div class="letter-header">
+                      <span class="letter-heart">💕</span>
+                    </div>
+                    <div class="letter-body">
+                      <p class="letter-text">亲爱的：</p>
+                      <p class="letter-message">感谢你出现在我的生命中，</p>
+                      <p class="letter-message">让每一个平凡的日子都变得闪闪发光。</p>
+                      <p class="letter-message">在这个特别的日子里，</p>
+                      <p class="letter-message">祝你生日快乐！</p>
+                      <p class="letter-message">愿所有的美好都如期而至，</p>
+                      <p class="letter-message">愿我们的故事永远未完待续。</p>
+                      <p class="letter-signature">永远爱你的 ❤️</p>
+                    </div>
+                    <div class="letter-footer">
+                      <div class="letter-decoration">✨</div>
+                    </div>
                   </div>
-                  <div class="letter-body">
-                    <p class="letter-text">亲爱的：</p>
-                    <p class="letter-message">感谢你出现在我的生命中，</p>
-                    <p class="letter-message">让每一个平凡的日子都变得闪闪发光。</p>
-                    <p class="letter-message">愿我们的故事永远未完待续，</p>
-                    <p class="letter-message">愿未来的每一天都有你的陪伴。</p>
-                    <p class="letter-signature">永远爱你的 ❤️</p>
-                  </div>
-                  <div class="letter-footer">
-                    <div class="letter-decoration">✨</div>
-                  </div>
+                  <div class="letter-border"></div>
+                  <div class="letter-corner top-left"></div>
+                  <div class="letter-corner top-right"></div>
+                  <div class="letter-corner bottom-left"></div>
+                  <div class="letter-corner bottom-right"></div>
                 </div>
-                <div class="letter-border"></div>
-                <div class="letter-corner top-left"></div>
-                <div class="letter-corner top-right"></div>
-                <div class="letter-corner bottom-left"></div>
-                <div class="letter-corner bottom-right"></div>
               </div>
+              <div class="letter-back"></div>
+              <div class="letter-top"></div>
+              <div class="letter-bottom"></div>
+              <div class="letter-left"></div>
+              <div class="letter-right"></div>
               <div class="close-hint">点击关闭</div>
             </div>
           </transition>
@@ -69,6 +91,11 @@
       <div class="footer-decoration">
         <div class="footer-sticker">💝</div>
         <div class="footer-doodle"></div>
+        <div class="birthday-badges">
+          <span class="badge">🎈</span>
+          <span class="badge">🎉</span>
+          <span class="badge">🎁</span>
+        </div>
       </div>
     </div>
   </div>
@@ -88,6 +115,13 @@ const isEnvelopeOpened = ref(false)
 
 let enterAnimations = []
 let envelopeAnimation = null
+let decorationAnimations = []
+
+const balloons = ['🎈', '🎈', '🎈']
+const stars = ['⭐', '✨', '⭐', '✨']
+
+const balloonStyles = ref([])
+const starStyles = ref([])
 
 const ANIMATION_CONFIG = {
   cardEnter: {
@@ -99,15 +133,17 @@ const ANIMATION_CONFIG = {
   },
   envelope: {
     flapRotation: -180,
-    flapDuration: 0.8,
+    flapDuration: 0.6,
     flapEase: 'power2.inOut',
-    letterY: -200,
-    letterRotation: -5,
-    letterDuration: 1.2,
-    letterDelay: 0.3,
-    letterScale: 1.05,
-    letterScaleDuration: 0.3,
-    letterScaleEase: 'power2.out'
+    letterY: -300,
+    letterRotation: -2,
+    letterDuration: 0.8,
+    letterDelay: 0.15,
+    letterScale: 1.08,
+    letterScaleDuration: 0.4,
+    letterScaleEase: 'elastic.out(1, 0.5)',
+    letterRotateX: 5,
+    letterRotateY: -3
   },
   inkSplatter: {
     opacity: 0.6,
@@ -118,12 +154,73 @@ const ANIMATION_CONFIG = {
   },
   closeEnvelope: {
     letterOpacity: 0,
-    letterDuration: 0.8,
+    letterDuration: 0.6,
     letterEase: 'power2.in',
-    flapDuration: 0.6,
+    flapDuration: 0.5,
     flapEase: 'power2.inOut',
-    flapDelay: 0.4
+    flapDelay: 0.3
+  },
+  decorations: {
+    balloonFloat: {
+      y: -15,
+      rotation: 3,
+      duration: 4,
+      repeat: -1,
+      yoyo: true,
+      ease: 'sine.inOut'
+    },
+    starTwinkle: {
+      opacity: 0.4,
+      scale: 0.9,
+      duration: 3,
+      repeat: -1,
+      yoyo: true,
+      ease: 'power1.inOut'
+    }
   }
+}
+
+const initializeDecorationStyles = () => {
+  balloonStyles.value = balloons.map((_, index) => ({
+    position: 'absolute',
+    left: `${15 + index * 25}%`,
+    top: `${8 + (index % 2) * 12}%`,
+    fontSize: `${1.8 + (index % 2) * 0.4}rem`,
+    opacity: 0.6,
+    transform: `rotate(${-8 + index * 4}deg)`,
+    animationDelay: `${index * 0.4}s`
+  }))
+
+  starStyles.value = stars.map((_, index) => ({
+    position: 'absolute',
+    left: `${10 + (index % 3) * 25}%`,
+    top: `${15 + (index % 2) * 18}%`,
+    fontSize: `${1 + (index % 2) * 0.4}rem`,
+    opacity: 0.5,
+    transform: `rotate(${-12 + index * 6}deg)`,
+    animationDelay: `${index * 0.3}s`
+  }))
+}
+
+const animateDecorations = () => {
+  const balloonElements = document.querySelectorAll('.balloon')
+  const starElements = document.querySelectorAll('.star')
+
+  balloonElements.forEach((balloon, index) => {
+    const anim = gsap.to(balloon, {
+      ...ANIMATION_CONFIG.decorations.balloonFloat,
+      delay: index * 0.3
+    })
+    decorationAnimations.push(anim)
+  })
+
+  starElements.forEach((star, index) => {
+    const anim = gsap.to(star, {
+      ...ANIMATION_CONFIG.decorations.starTwinkle,
+      delay: index * 0.2
+    })
+    decorationAnimations.push(anim)
+  })
 }
 
 const toggleEnvelope = () => {
@@ -186,17 +283,21 @@ const animateEnvelopeOpening = () => {
   timeline.to(letterRef.value, {
     y: ANIMATION_CONFIG.envelope.letterY,
     rotation: ANIMATION_CONFIG.envelope.letterRotation,
+    rotateX: ANIMATION_CONFIG.envelope.letterRotateX,
+    rotateY: ANIMATION_CONFIG.envelope.letterRotateY,
     duration: ANIMATION_CONFIG.envelope.letterDuration,
-    ease: 'power2.out',
+    ease: 'power3.out',
     delay: ANIMATION_CONFIG.envelope.letterDelay
-  }, '-=0.4')
+  }, '-=0.3')
 
   timeline.to(letterRef.value, {
     scale: ANIMATION_CONFIG.envelope.letterScale,
     rotation: 0,
+    rotateX: 0,
+    rotateY: 0,
     duration: ANIMATION_CONFIG.envelope.letterScaleDuration,
     ease: ANIMATION_CONFIG.envelope.letterScaleEase
-  })
+  }, '-=0.5')
 }
 
 const animateCardEnter = () => {
@@ -239,11 +340,17 @@ const stopAnimations = () => {
     if (anim && anim.kill) anim.kill()
   })
   enterAnimations = []
+  decorationAnimations.forEach(anim => {
+    if (anim && anim.kill) anim.kill()
+  })
+  decorationAnimations = []
 }
 
 onMounted(() => {
+  initializeDecorationStyles()
   nextTick(() => {
     animateCardEnter()
+    animateDecorations()
   })
 })
 
@@ -275,6 +382,30 @@ onUnmounted(() => {
   height: 100%;
   pointer-events: none;
   z-index: 1;
+}
+
+.birthday-decorations {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.balloon {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  transition: transform 0.4s ease;
+}
+
+.star {
+  position: absolute;
+  pointer-events: none;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.06));
+  transition: transform 0.4s ease;
 }
 
 .paper-texture {
@@ -324,57 +455,60 @@ onUnmounted(() => {
 
 .title-section {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 40px;
   position: relative;
 
+  .birthday-cake {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    animation: cakeBounce 3s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  }
+
+  @keyframes cakeBounce {
+
+    0%,
+    100% {
+      transform: translateY(0) rotate(0deg);
+    }
+
+    50% {
+      transform: translateY(-6px) rotate(2deg);
+    }
+  }
+
   .card-number {
-    font-size: 1.2rem;
-    color: rgba(139, 119, 101, 0.7);
-    font-weight: 600;
-    margin-bottom: 8px;
-    letter-spacing: 2px;
+    font-size: 1rem;
+    color: rgba(139, 119, 101, 0.6);
+    font-weight: 500;
+    margin-bottom: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
   }
 
   .card-title {
-    font-size: 2.5rem;
+    font-size: 2.2rem;
     color: #8b7765;
     font-weight: 700;
-    margin-bottom: 15px;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.08);
   }
 
   .title-underline {
-    width: 80px;
-    height: 3px;
-    background: linear-gradient(90deg, transparent, rgba(139, 119, 101, 0.6), transparent);
-    margin: 0 auto;
-  }
-
-  .title-decoration-left,
-  .title-decoration-right {
-    position: absolute;
-    top: 50%;
-    width: 30px;
+    width: 60px;
     height: 2px;
-    background: rgba(139, 119, 101, 0.4);
-  }
-
-  .title-decoration-left {
-    left: -40px;
-  }
-
-  .title-decoration-right {
-    right: -40px;
+    background: linear-gradient(90deg, transparent, rgba(139, 119, 101, 0.5), transparent);
+    margin: 0 auto;
   }
 }
 
 .message-section {
   text-align: center;
-  margin-bottom: 40px;
-  max-width: 600px;
+  margin-bottom: 50px;
+  max-width: 500px;
 
   .main-message {
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     color: #8b7765;
     font-weight: 600;
     margin-bottom: 12px;
@@ -382,8 +516,8 @@ onUnmounted(() => {
   }
 
   .sub-message {
-    font-size: 1.1rem;
-    color: rgba(139, 119, 101, 0.8);
+    font-size: 1rem;
+    color: rgba(139, 119, 101, 0.75);
     font-weight: 500;
     line-height: 1.6;
   }
@@ -391,35 +525,52 @@ onUnmounted(() => {
 
 .envelope-section {
   position: relative;
-  margin-bottom: 40px;
+  margin-bottom: 50px;
 }
 
 .envelope-container {
   position: relative;
-  width: 280px;
-  height: 180px;
+  width: 260px;
+  height: 170px;
   cursor: pointer;
-  perspective: 1000px;
+  perspective: 1200px;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 20px;
+    background: radial-gradient(ellipse, rgba(139, 119, 101, 0.2) 0%, transparent 70%);
+    filter: blur(8px);
+    z-index: -1;
+  }
 }
 
-.envelope {
+.envelope-3d {
   position: relative;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #f5e6d3 0%, #e8d4c0 100%);
-  border-radius: 8px;
-  box-shadow:
-    0 8px 24px rgba(139, 119, 101, 0.3),
-    0 4px 12px rgba(139, 119, 101, 0.2),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.3s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 
   &:hover {
-    transform: translateY(-5px);
-    box-shadow:
-      0 12px 32px rgba(139, 119, 101, 0.4),
-      0 6px 16px rgba(139, 119, 101, 0.3),
-      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    transform: translateY(-3px);
+  }
+
+  &:active {
+    transform: translateY(-1px);
   }
 
   &.opened {
@@ -428,18 +579,99 @@ onUnmounted(() => {
   }
 }
 
+.envelope-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e8d9cf 0%, #dfccc0 100%);
+  border-radius: 6px;
+  transform: translateZ(-10px);
+  box-shadow: inset 0 0 20px rgba(139, 119, 101, 0.15);
+}
+
+.envelope-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0e3d9 0%, #f7ebe3 100%);
+  border-radius: 6px 0 0 6px;
+  transform: rotateY(-90deg) translateZ(130px);
+  transform-origin: left;
+  box-shadow: inset -2px 0 10px rgba(139, 119, 101, 0.1);
+}
+
+.envelope-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, #f7ebe3 0%, #f0e3d9 100%);
+  border-radius: 0 6px 6px 0;
+  transform: rotateY(90deg) translateZ(130px);
+  transform-origin: right;
+  box-shadow: inset 2px 0 10px rgba(139, 119, 101, 0.1);
+}
+
+.envelope-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  background: linear-gradient(180deg, #f7ebe3 0%, #f0e3d9 100%);
+  border-radius: 0 0 6px 6px;
+  transform: rotateX(90deg) translateZ(85px);
+  transform-origin: bottom;
+  box-shadow: inset 0 2px 10px rgba(139, 119, 101, 0.1);
+}
+
+.envelope-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f7ebe3 0%, #f0e3d9 100%);
+  border-radius: 6px;
+  transform: translateZ(10px);
+  box-shadow:
+    0 4px 16px rgba(139, 119, 101, 0.15),
+    0 2px 8px rgba(139, 119, 101, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 20px;
+}
+
 .envelope-flap {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
-  height: 90px;
-  background: linear-gradient(135deg, #e8d4c0 0%, #d9c4b0 100%);
+  height: 85px;
+  background: linear-gradient(135deg, #f0e3d9 0%, #e8d9cf 100%);
   transform-origin: top;
   clip-path: polygon(0 0, 50% 100%, 100% 0);
   z-index: 3;
+  transform: translateZ(20px);
   transition: transform 0.8s ease;
-  box-shadow: 0 2px 8px rgba(139, 119, 101, 0.2);
+  box-shadow: 0 1px 4px rgba(139, 119, 101, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 5px;
+
+  .click-hint {
+    font-size: 2rem;
+    animation: heartbeat 2s ease-in-out infinite;
+  }
 
   .flap-inner {
     position: absolute;
@@ -447,7 +679,17 @@ onUnmounted(() => {
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 100%);
+  }
+
+  .flap-shadow {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: linear-gradient(to bottom, transparent, rgba(139, 119, 101, 0.1));
+    pointer-events: none;
   }
 }
 
@@ -464,20 +706,13 @@ onUnmounted(() => {
 }
 
 .envelope-text {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-
-  .click-hint {
-    font-size: 2.5rem;
-    animation: heartbeat 1.5s ease-in-out infinite;
-  }
+  position: relative;
+  z-index: 10;
 
   .receive-text {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: #8b7765;
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: 1px;
   }
 }
@@ -490,20 +725,37 @@ onUnmounted(() => {
   }
 
   50% {
-    transform: scale(1.1);
+    transform: scale(1.05);
   }
 }
 
-.letter {
+.letter-3d {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 260px;
-  min-height: 220px;
-  z-index: 4;
+  width: 240px;
+  height: 400px;
+  z-index: 10;
   cursor: pointer;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+  transition: transform 0.3s ease;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    height: 15px;
+    background: radial-gradient(ellipse, rgba(139, 119, 101, 0.15) 0%, transparent 70%);
+    filter: blur(6px);
+    z-index: -1;
+  }
 
   &:hover {
     transform: translate(-50%, -50%) scale(1.02);
@@ -514,18 +766,89 @@ onUnmounted(() => {
   }
 }
 
+.letter-front {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: translateZ(5px);
+  z-index: 5;
+}
+
+.letter-back {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #e8d9cf 0%, #dfccc0 100%);
+  border-radius: 4px;
+  transform: translateZ(-5px);
+  box-shadow: inset 0 0 15px rgba(139, 119, 101, 0.15);
+}
+
+.letter-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(180deg, #fffef9 0%, #fff9f0 100%);
+  transform: rotateX(90deg) translateZ(5px);
+  transform-origin: top;
+}
+
+.letter-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: linear-gradient(180deg, #fff5e6 0%, #fffef9 100%);
+  transform: rotateX(-90deg) translateZ(5px);
+  transform-origin: bottom;
+}
+
+.letter-left {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 100%;
+  background: linear-gradient(90deg, #fffef9 0%, #fff9f0 100%);
+  transform: rotateY(-90deg) translateZ(5px);
+  transform-origin: left;
+}
+
+.letter-right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 100%;
+  background: linear-gradient(90deg, #fff9f0 0%, #fffef9 100%);
+  transform: rotateY(90deg) translateZ(5px);
+  transform-origin: right;
+}
+
 .letter-paper {
   position: relative;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #fffef9 0%, #fff9f0 50%, #fff5e6 100%);
+  background:
+    linear-gradient(135deg, #fffef9 0%, #fff9f0 50%, #fff5e6 100%),
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
   border-radius: 4px;
   box-shadow:
-    0 8px 24px rgba(139, 119, 101, 0.4),
-    0 4px 12px rgba(139, 119, 101, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  padding: 20px;
+    0 4px 16px rgba(139, 119, 101, 0.2),
+    0 2px 8px rgba(139, 119, 101, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.05);
+  padding: 16px;
   overflow: hidden;
+  z-index: 1;
 
   &::before {
     content: '';
@@ -537,10 +860,22 @@ onUnmounted(() => {
     background-image:
       repeating-linear-gradient(0deg,
         transparent,
-        transparent 27px,
-        rgba(139, 119, 101, 0.08) 28px);
+        transparent 23px,
+        rgba(139, 119, 101, 0.06) 24px);
     pointer-events: none;
     z-index: 1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, transparent 50%, rgba(139, 119, 101, 0.05) 100%);
+    pointer-events: none;
+    z-index: 6;
   }
 }
 
@@ -553,111 +888,111 @@ onUnmounted(() => {
   background-image:
     repeating-linear-gradient(0deg,
       transparent,
-      transparent 27px,
-      rgba(139, 119, 101, 0.1) 28px);
+      transparent 23px,
+      rgba(139, 119, 101, 0.08) 24px);
   pointer-events: none;
-  z-index: 1;
+  z-index: 2;
 }
 
 .letter-border {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  right: 8px;
-  bottom: 8px;
-  border: 2px solid rgba(139, 119, 101, 0.15);
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  bottom: 6px;
+  border: 1px solid rgba(139, 119, 101, 0.12);
   border-radius: 2px;
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
 }
 
 .letter-corner {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   pointer-events: none;
-  z-index: 2;
+  z-index: 4;
 
   &::before,
   &::after {
     content: '';
     position: absolute;
-    background: rgba(139, 119, 101, 0.25);
+    background: rgba(139, 119, 101, 0.2);
   }
 
   &.top-left {
-    top: 12px;
-    left: 12px;
+    top: 10px;
+    left: 10px;
 
     &::before {
       top: 0;
       left: 0;
-      width: 2px;
-      height: 10px;
+      width: 1px;
+      height: 8px;
     }
 
     &::after {
       top: 0;
       left: 0;
-      width: 10px;
-      height: 2px;
+      width: 8px;
+      height: 1px;
     }
   }
 
   &.top-right {
-    top: 12px;
-    right: 12px;
+    top: 10px;
+    right: 10px;
 
     &::before {
       top: 0;
       right: 0;
-      width: 2px;
-      height: 10px;
+      width: 1px;
+      height: 8px;
     }
 
     &::after {
       top: 0;
       right: 0;
-      width: 10px;
-      height: 2px;
+      width: 8px;
+      height: 1px;
     }
   }
 
   &.bottom-left {
-    bottom: 12px;
-    left: 12px;
+    bottom: 10px;
+    left: 10px;
 
     &::before {
       bottom: 0;
       left: 0;
-      width: 2px;
-      height: 10px;
+      width: 1px;
+      height: 8px;
     }
 
     &::after {
       bottom: 0;
       left: 0;
-      width: 10px;
-      height: 2px;
+      width: 8px;
+      height: 1px;
     }
   }
 
   &.bottom-right {
-    bottom: 12px;
-    right: 12px;
+    bottom: 10px;
+    right: 10px;
 
     &::before {
       bottom: 0;
       right: 0;
-      width: 2px;
-      height: 10px;
+      width: 1px;
+      height: 8px;
     }
 
     &::after {
       bottom: 0;
       right: 0;
-      width: 10px;
-      height: 2px;
+      width: 8px;
+      height: 1px;
     }
   }
 }
@@ -668,16 +1003,16 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  z-index: 3;
+  z-index: 5;
 }
 
 .close-hint {
   position: absolute;
-  bottom: -30px;
+  bottom: -25px;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 0.85rem;
-  color: rgba(139, 119, 101, 0.6);
+  font-size: 0.75rem;
+  color: rgba(139, 119, 101, 0.5);
   white-space: nowrap;
   opacity: 0;
   animation: fadeInUp 0.5s ease 1s forwards;
@@ -699,11 +1034,11 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
 
   .letter-heart {
-    font-size: 2rem;
-    animation: float 3s ease-in-out infinite;
+    font-size: 1.5rem;
+    animation: float 4s ease-in-out infinite;
   }
 }
 
@@ -715,37 +1050,37 @@ onUnmounted(() => {
   }
 
   50% {
-    transform: translateY(-8px);
+    transform: translateY(-5px);
   }
 }
 
 .letter-body {
   width: 100%;
   text-align: center;
-  padding: 10px 0;
+  padding: 8px 0;
 
   .letter-text {
-    font-size: 1.1rem;
+    font-size: 0.9rem;
     color: #8b7765;
     font-weight: 600;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
   }
 
   .letter-message {
-    font-size: 0.95rem;
-    color: rgba(139, 119, 101, 0.9);
-    line-height: 2;
+    font-size: 0.8rem;
+    color: rgba(139, 119, 101, 0.85);
+    line-height: 1.8;
     margin-bottom: 0;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
     font-family: 'Georgia', 'Times New Roman', serif;
   }
 
   .letter-signature {
-    font-size: 1rem;
+    font-size: 0.85rem;
     color: #c4a77d;
     font-weight: 600;
-    margin-top: 20px;
+    margin-top: 15px;
     font-style: italic;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
     font-family: 'Georgia', 'Times New Roman', serif;
@@ -756,11 +1091,11 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin-top: 15px;
+  margin-top: 12px;
 
   .letter-decoration {
-    font-size: 1.5rem;
-    animation: sparkle 2s ease-in-out infinite;
+    font-size: 1.2rem;
+    animation: sparkle 3s ease-in-out infinite;
   }
 }
 
@@ -774,43 +1109,78 @@ onUnmounted(() => {
 
   50% {
     opacity: 1;
-    transform: scale(1.2);
+    transform: scale(1.1);
   }
 }
 
 .letter-fly-enter-active {
-  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 1.0s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .letter-fly-enter-from {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.8);
+  transform: translate(-50%, -50%) scale(0.85) translateY(20px);
 }
 
 .letter-fly-leave-active {
-  transition: all 0.8s cubic-bezier(0.4, 0, 1, 1);
+  transition: all 0.6s cubic-bezier(0.55, 0.085, 0.68, 0.53);
 }
 
 .letter-fly-leave-to {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.9);
+  transform: translate(-50%, -50%) scale(0.95) translateY(-10px);
 }
 
 .footer-decoration {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-top: 20px;
+  gap: 20px;
+  margin-top: 30px;
 
   .footer-sticker {
-    font-size: 2rem;
-    animation: bounce 2s ease-in-out infinite;
+    font-size: 1.8rem;
+    animation: bounce 2.5s ease-in-out infinite;
   }
 
   .footer-doodle {
-    width: 60px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(139, 119, 101, 0.4), transparent);
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(139, 119, 101, 0.3), transparent);
+  }
+
+  .birthday-badges {
+    display: flex;
+    gap: 12px;
+
+    .badge {
+      font-size: 1.3rem;
+      animation: badgeFloat 3s ease-in-out infinite;
+      filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
+
+      &:nth-child(1) {
+        animation-delay: 0s;
+      }
+
+      &:nth-child(2) {
+        animation-delay: 0.5s;
+      }
+
+      &:nth-child(3) {
+        animation-delay: 1s;
+      }
+    }
+  }
+}
+
+@keyframes badgeFloat {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-6px) rotate(3deg);
   }
 }
 
@@ -854,11 +1224,23 @@ onUnmounted(() => {
   .envelope-container {
     width: 240px;
     height: 150px;
+
+    .envelope-left {
+      transform: rotateY(-90deg) translateZ(120px);
+    }
+
+    .envelope-right {
+      transform: rotateY(90deg) translateZ(120px);
+    }
+
+    .envelope-bottom {
+      transform: rotateX(90deg) translateZ(75px);
+    }
   }
 
-  .letter {
+  .letter-3d {
     width: 220px;
-    min-height: 200px;
+    height: 400px;
   }
 
   .letter-paper {

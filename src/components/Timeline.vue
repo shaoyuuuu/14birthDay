@@ -1,15 +1,21 @@
 <template>
-  <div class="timeline-container">
+  <div class="timeline-container" :style="{ background: currentPageBackground }">
     <div class="card-wrapper" @touchstart="handleTouchStart" @touchend="handleTouchEnd">
-      <Transition :name="transitionName">
-        <TimelineCard v-if="currentIndex < items.length" :key="currentIndex" :item="items[currentIndex]"
-          :index="currentIndex" :background="getCardBackground(currentIndex)" :theme="items[currentIndex].theme"
-          @image-change="handleImageChange" />
+      <Transition :name="transitionName" mode="out-in">
+        <div v-if="items.length === 0" key="loading" class="loading-state">
+          <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-text">正在加载回忆...</p>
+          </div>
+        </div>
+        <TimelineCard v-else-if="currentIndex < items.length" :key="currentIndex" :item="items[currentIndex]"
+          :index="currentIndex" :background="getCardBackground(items[currentIndex].theme)"
+          :theme="items[currentIndex].theme" @image-change="handleImageChange" />
         <FinalMemoryCard v-else :key="'final'" />
       </Transition>
     </div>
 
-    <div class="progress-bar">
+    <div class="progress-bar" v-if="items.length > 0">
       <StickFigure :progress="progressPercentage" :size="20" :comment="currentComment" :is-sliding="isSliding" />
     </div>
   </div>
@@ -22,6 +28,7 @@ import TimelineCard from './TimelineCard.vue'
 import FinalMemoryCard from './FinalMemoryCard.vue'
 import useImagePreload from '../composables/useImagePreload'
 import { getCardBackground } from '../utils/themeUtils'
+import { getThemeConfig } from '../data/themeConfigs'
 
 const props = defineProps({
   items: {
@@ -52,6 +59,9 @@ const SWIPE_THRESHOLD = 50
 const COMPLETE_DELAY = 2000
 
 const transitionName = computed(() => {
+  if (props.items.length === 0) {
+    return 'loading'
+  }
   return slideDirection.value === 'next' ? 'slide-next' : 'slide-prev'
 })
 
@@ -66,6 +76,15 @@ const currentComment = computed(() => {
     return '未完待续...'
   }
   return props.items[currentIndex.value]?.comment || ''
+})
+
+const currentPageBackground = computed(() => {
+  if (currentIndex.value >= props.items.length) {
+    return 'linear-gradient(135deg, rgba(255, 220, 180, 0.15) 0%, rgba(200, 160, 120, 0.12) 50%, rgba(100, 80, 60, 0.18) 100%)'
+  }
+  const themeName = props.items[currentIndex.value]?.theme
+  const themeConfig = getThemeConfig(themeName)
+  return themeConfig?.colors?.pageBackground || 'linear-gradient(135deg, rgba(255, 220, 180, 0.15) 0%, rgba(200, 160, 120, 0.12) 50%, rgba(100, 80, 60, 0.18) 100%)'
 })
 
 const goToIndex = (index) => {
@@ -157,6 +176,7 @@ onMounted(() => {
   position: relative;
   overflow: hidden;
   font-family: $font-family;
+  transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-wrapper {
@@ -164,6 +184,7 @@ onMounted(() => {
   height: 100%;
   position: relative;
   overflow: hidden;
+  min-height: 100vh;
 }
 
 .slide-next-enter-active,
@@ -174,6 +195,30 @@ onMounted(() => {
   position: absolute;
   width: 100%;
   height: 100%;
+}
+
+.loading-enter-active,
+.loading-leave-active {
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  position: absolute;
+  width: 100%;
+  height: 100%;
+}
+
+.loading-enter-from {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.loading-leave-to {
+  opacity: 0;
+  transform: scale(1.1);
+}
+
+.loading-enter-to,
+.loading-leave-from {
+  opacity: 1;
+  transform: scale(1);
 }
 
 .slide-next-enter-from {
@@ -259,6 +304,78 @@ onMounted(() => {
   }
 }
 
+.loading-state {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.loading-content {
+  text-align: center;
+  animation: fadeInUp 0.6s ease-out;
+  position: relative;
+  z-index: 11;
+}
+
+.loading-spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 20px;
+  border: 3px solid rgba(139, 119, 101, 0.2);
+  border-top-color: #8b7765;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-text {
+  font-size: $font-size-md;
+  color: #8b7765;
+  font-style: italic;
+  letter-spacing: 1px;
+  margin: 0;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
 @media (max-width: $breakpoint-sm) {
   .progress-bar {
     height: 60px;
@@ -274,6 +391,15 @@ onMounted(() => {
     &::after {
       height: 10px;
     }
+  }
+
+  .loading-spinner {
+    width: 50px;
+    height: 50px;
+  }
+
+  .loading-text {
+    font-size: $font-size-sm;
   }
 }
 </style>

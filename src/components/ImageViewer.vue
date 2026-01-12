@@ -8,34 +8,35 @@
     </div>
 
     <div class="main-photo-wrapper">
-      <transition name="fade" mode="out-in">
-        <div class="photo-card main-photo" ref="mainPhoto" :key="currentOptimizedImage" @click="pauseAutoPlay">
-          <div v-show="isMainImageLoading" class="image-loading-overlay">
-            <div class="loading-spinner"></div>
-            <div class="loading-dots">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
+      <div class="photo-card main-photo" ref="mainPhoto" @click="pauseAutoPlay">
+        <div v-show="isMainImageLoading" class="image-loading-overlay">
+          <div class="loading-spinner"></div>
+          <div class="loading-dots">
+            <span></span>
+            <span></span>
+            <span></span>
           </div>
-          <CachedImage :src="currentOptimizedImage" :alt="'主照片'" imageClass="photo-image" fitMode="auto"
-            :class="{ 'loading': isMainImageLoading }" @load="handleMainImageLoad" @error="handleMainImageError" />
-          <div class="tape tape-main" :style="mainTapeStyle"></div>
         </div>
-      </transition>
-    </div>
+        <transition name="fade" mode="out-in">
+          <CachedImage :key="currentOptimizedImage" :src="currentOptimizedImage" :alt="'主照片'" imageClass="photo-image"
+            fitMode="auto" :class="{ 'loading': isMainImageLoading }" @load="handleMainImageLoad"
+            @error="handleMainImageError" />
+        </transition>
+        <div class="tape tape-main" :style="mainTapeStyle"></div>
+      </div>
 
-    <div class="thumbnails-layer">
-      <transition-group name="thumbnail" tag="div" class="thumbnails-grid">
-        <div v-for="(img, idx) in thumbnailImages" :key="`${img}-${idx}`" class="photo-card thumbnail"
-          :class="{ 'active': img === currentOptimizedImage }" :style="getThumbnailStyle(idx)"
-          @click="handleThumbnailClick(img, idx)">
-          <transition name="fade" mode="out-in">
-            <CachedImage :key="img" :src="img" :alt="`缩略图 ${idx + 1}`" imageClass="photo-image" fitMode="cover" />
-          </transition>
-          <div class="tape tape-small" :style="getThumbnailTapeStyle(idx)"></div>
-        </div>
-      </transition-group>
+      <div class="thumbnails-layer">
+        <transition-group name="thumbnail" tag="div" class="thumbnails-grid">
+          <div v-for="(img, idx) in thumbnailImages" :key="`${img}-${idx}`" class="photo-card thumbnail"
+            :class="{ 'active': img === currentOptimizedImage }" :style="getThumbnailStyle(idx)"
+            @click="handleThumbnailClick(img, idx)">
+            <transition name="fade" mode="out-in">
+              <CachedImage :key="img" :src="img" :alt="`缩略图 ${idx + 1}`" imageClass="photo-image" fitMode="cover" />
+            </transition>
+            <div class="tape tape-small" :style="getThumbnailTapeStyle(idx)"></div>
+          </div>
+        </transition-group>
+      </div>
     </div>
 
     <div class="hand-drawn-layer">
@@ -84,7 +85,7 @@ const props = defineProps({
   },
   theme: {
     type: String,
-    default: 'qiqibaba'
+    default: '七七八八'
   }
 })
 
@@ -253,8 +254,8 @@ const getThumbnailStyle = (index) => {
   return {
     ...baseStyle,
     ...transform,
-    width: 'min(140px, 18vw)',
-    height: 'min(105px, 13.5vw)'
+    width: 'min(110px, 14vw)',
+    height: 'min(82.5px, 10.5vw)'
   }
 }
 
@@ -301,7 +302,7 @@ onUnmounted(() => {
 
 .image-viewer {
   width: 100%;
-  height: min(35vh, 320px);
+  height: clamp(35vh, 40vh, 450px);
   position: relative;
   overflow: visible;
   flex-shrink: 0;
@@ -342,24 +343,76 @@ onUnmounted(() => {
   z-index: 5;
 }
 
+.thumbnails-layer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(50vh, 420px);
+  height: min(37vh, 300px);
+  pointer-events: none;
+  z-index: 10;
+}
+
 .photo-card {
   position: relative;
   background: #fff;
-  padding: 12px;
+  padding: 16px;
   box-shadow:
-    0 4px 12px rgba(139, 119, 101, 0.2),
-    0 8px 24px rgba(139, 119, 101, 0.15),
-    0 2px 6px rgba(139, 119, 101, 0.1);
+    0 6px 16px rgba(139, 119, 101, 0.25),
+    0 12px 32px rgba(139, 119, 101, 0.2),
+    0 3px 8px rgba(139, 119, 101, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9);
   cursor: pointer;
   overflow: hidden;
-  border-radius: 2px;
-  border: 1px solid rgba(139, 119, 101, 0.15);
+  border-radius: 3px;
+  border: 2px solid rgba(139, 119, 101, 0.2);
   will-change: transform, opacity;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    right: 4px;
+    bottom: 4px;
+    border: 1px solid rgba(139, 119, 101, 0.15);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.4) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.3) 100%);
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 3px;
+  }
+
+  &:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+      0 8px 24px rgba(139, 119, 101, 0.3),
+      0 16px 48px rgba(139, 119, 101, 0.25),
+      0 4px 12px rgba(139, 119, 101, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    border-color: rgba(139, 119, 101, 0.3);
+  }
 }
 
 .main-photo {
-  width: min(55vh, 480px);
-  height: min(41vh, 360px);
+  width: min(50vh, 420px);
+  height: min(37vh, 300px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -471,16 +524,6 @@ onUnmounted(() => {
   transform: translateX(-50%);
 }
 
-.thumbnails-layer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 10;
-}
-
 .thumbnails-grid {
   width: 100%;
   height: 100%;
@@ -488,23 +531,62 @@ onUnmounted(() => {
 
 .thumbnail {
   position: absolute;
-  width: min(140px, 18vw);
-  height: min(105px, 13.5vw);
+  width: min(110px, 14vw);
+  height: min(82.5px, 10.5vw);
   pointer-events: auto;
   opacity: 0.85;
-  padding: 4px;
+  padding: 6px;
   will-change: transform, opacity;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: #fff;
+  border-radius: 2px;
+  border: 1px solid rgba(139, 119, 101, 0.2);
+  box-shadow:
+    0 3px 8px rgba(139, 119, 101, 0.2),
+    0 6px 16px rgba(139, 119, 101, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border: 1px solid rgba(139, 119, 101, 0.12);
+    border-radius: 1px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.3) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0.2) 100%);
+    pointer-events: none;
+    z-index: 2;
+    border-radius: 2px;
+  }
 
   &:hover {
     opacity: 1;
+    transform: translateY(-3px) scale(1.05) !important;
     box-shadow:
-      0 8px 18px rgba(139, 119, 101, 0.3),
-      0 16px 36px rgba(139, 119, 101, 0.25),
-      0 6px 12px rgba(139, 119, 101, 0.2);
+      0 8px 20px rgba(139, 119, 101, 0.3),
+      0 16px 40px rgba(139, 119, 101, 0.25),
+      0 4px 12px rgba(139, 119, 101, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border-color: rgba(139, 119, 101, 0.35);
     z-index: 100 !important;
   }
 
@@ -513,10 +595,11 @@ onUnmounted(() => {
     box-shadow:
       0 6px 20px rgba(196, 167, 125, 0.5),
       0 12px 40px rgba(196, 167, 125, 0.4),
-      0 4px 12px rgba(196, 167, 125, 0.3);
+      0 4px 12px rgba(196, 167, 125, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95);
     border-color: rgba(196, 167, 125, 0.8);
-    border-width: 3px;
-    transform: scale(1.08) !important;
+    border-width: 2px;
+    transform: scale(1.1) translateY(-4px) !important;
     z-index: 50 !important;
 
     .tape-small {
@@ -559,13 +642,18 @@ onUnmounted(() => {
     padding: 5px;
   }
 
+  .thumbnails-layer {
+    width: min(40vh, 350px);
+    height: min(28vh, 240px);
+  }
+
   .sticker {
     font-size: 20px;
   }
 
   .main-photo {
     width: min(40vh, 350px);
-    height: min(30vh, 260px);
+    height: min(28vh, 240px);
   }
 }
 
@@ -574,6 +662,11 @@ onUnmounted(() => {
     width: min(180px, 28vw);
     height: min(135px, 21vw);
     padding: 6px;
+  }
+
+  .thumbnails-layer {
+    width: min(35vh, 300px);
+    height: min(24vh, 210px);
   }
 
   .sticker {
@@ -586,7 +679,7 @@ onUnmounted(() => {
 
   .main-photo {
     width: min(35vh, 300px);
-    height: min(26vh, 230px);
+    height: min(24vh, 210px);
   }
 }
 

@@ -127,6 +127,10 @@ class ErrorHandler {
       return error
     }
 
+    if (error === null || error === undefined) {
+      return new AppError('未知错误', ErrorTypes.UNKNOWN, null)
+    }
+
     if (error instanceof TypeError || error instanceof ReferenceError) {
       return new AppError(error.message, ErrorTypes.UNKNOWN, error)
     }

@@ -1,438 +1,368 @@
-const decorTypes = {
-  stickers: [
-    '✨',
-    '📷',
-    '🌸',
-    '💫',
-    '🎈',
-    '🎀',
-    '🌟',
-    '💝',
-    '🍀',
-    '🎵',
-    '🎨',
-    '🌺',
-    '🦋',
-    '🎪',
-    '🎭',
-  ],
-  tapes: ['washi', 'kraft', 'transparent', 'patterned', 'glitter'],
-  handDrawn: ['circle', 'star', 'heart', 'arrow', 'doodle', 'squiggle'],
-  paperTextures: ['plain', 'grid', 'lined', 'dotted', 'craft', 'vintage'],
-}
-
 export const themeConfigs = {
-  qiqibaba: {
-    name: '日常回忆',
+  七七八八: {
     colors: {
-      primary: '#66bb6a',
-      secondary: '#81c784',
-      accent: '#aed581',
-      background: '#e8f5e8',
-      paper: '#f5f9f5',
+      primary: '#ff6b9d',
+      secondary: '#ff8fb1',
+      background: 'rgba(255, 107, 157, 0.12)',
+      accent: '#ff4081',
+      pageBackground:
+        'linear-gradient(135deg, rgba(255, 182, 193, 0.25) 0%, rgba(255, 218, 233, 0.15) 50%, rgba(255, 192, 203, 0.2) 100%)',
     },
-    animation: {
-      enter: 'fadeIn',
-      stagger: 0.1,
-      duration: 0.8,
-    },
-    layout: {
-      imagePosition: 'top',
-      contentAlignment: 'center',
+    shadow: {
+      intensity: 'medium',
+      color: '#ff6b9d',
     },
     decor: {
       pattern: 'dots',
-      opacity: 0.1,
-      stickers: ['✨', '🌸', '💫'],
-      tapes: ['washi', 'transparent'],
-      tapeColors: ['rgba(102, 187, 106, 0.7)', 'rgba(174, 213, 129, 0.6)'],
-      handDrawn: ['circle', 'squiggle'],
-      paperTexture: 'dotted',
+      paperTexture: 'subtle',
+      stickers: ['🌸', '✨', '🎀'],
+      handDrawn: ['circle', 'heart'],
       cornerDecor: 'rounded',
     },
-    shadow: {
-      intensity: 'soft',
-      color: 'rgba(102, 187, 106, 0.1)',
-    },
-  },
-
-  leshan: {
-    name: '旅行回忆',
-    colors: {
-      primary: '#42a5f5',
-      secondary: '#64b5f6',
-      accent: '#90caf9',
-      background: '#e3f2fd',
-      paper: '#f0f7ff',
-    },
-    animation: {
-      enter: 'slideInRight',
-      stagger: 0.15,
-      duration: 0.9,
-    },
     layout: {
-      imagePosition: 'top',
       contentAlignment: 'left',
     },
-    decor: {
-      pattern: 'mountains',
-      opacity: 0.12,
-      stickers: ['📷', '🎈', '🌟'],
-      tapes: ['patterned', 'washi'],
-      tapeColors: ['rgba(66, 165, 245, 0.7)', 'rgba(144, 202, 249, 0.6)'],
-      handDrawn: ['arrow', 'doodle'],
-      paperTexture: 'grid',
-      cornerDecor: 'folded',
+  },
+  华尖山: {
+    colors: {
+      primary: '#7c4dff',
+      secondary: '#b388ff',
+      background: 'rgba(124, 77, 255, 0.12)',
+      accent: '#651fff',
+      pageBackground:
+        'linear-gradient(135deg, rgba(179, 136, 255, 0.25) 0%, rgba(206, 158, 252, 0.15) 50%, rgba(224, 179, 252, 0.2) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: 'rgba(66, 165, 245, 0.12)',
-    },
-  },
-
-  huajianshan: {
-    name: '自然风景',
-    colors: {
-      primary: '#8d6e63',
-      secondary: '#a1887f',
-      accent: '#bcaaa4',
-      background: '#efebe9',
-      paper: '#faf6f4',
-    },
-    animation: {
-      enter: 'scaleIn',
-      stagger: 0.2,
-      duration: 1.0,
-    },
-    layout: {
-      imagePosition: 'center',
-      contentAlignment: 'center',
+      color: '#7c4dff',
     },
     decor: {
-      pattern: 'trees',
-      opacity: 0.08,
-      stickers: ['🌺', '🍀', '🦋'],
-      tapes: ['kraft', 'transparent'],
-      tapeColors: ['rgba(141, 110, 99, 0.75)', 'rgba(188, 170, 164, 0.6)'],
-      handDrawn: ['leaf', 'squiggle'],
-      paperTexture: 'craft',
-      cornerDecor: 'torn',
-    },
-    shadow: {
-      intensity: 'strong',
-      color: 'rgba(141, 110, 99, 0.15)',
-    },
-  },
-
-  daerpu: {
-    name: '校园回忆',
-    colors: {
-      primary: '#9575cd',
-      secondary: '#a1887f',
-      accent: '#b39ddb',
-      background: '#f3e5f5',
-      paper: '#faf5fc',
-    },
-    animation: {
-      enter: 'slideInLeft',
-      stagger: 0.1,
-      duration: 0.8,
-    },
-    layout: {
-      imagePosition: 'top',
-      contentAlignment: 'left',
-    },
-    decor: {
-      pattern: 'books',
-      opacity: 0.1,
-      stickers: ['🎨', '🎵', '✨'],
-      tapes: ['washi', 'patterned'],
-      tapeColors: ['rgba(149, 117, 205, 0.7)', 'rgba(179, 157, 219, 0.6)'],
-      handDrawn: ['star', 'doodle'],
-      paperTexture: 'lined',
-      cornerDecor: 'rounded',
-    },
-    shadow: {
-      intensity: 'medium',
-      color: 'rgba(149, 117, 205, 0.12)',
-    },
-  },
-
-  'tianfu-art-gallery': {
-    name: '艺术文化',
-    colors: {
-      primary: '#f44336',
-      secondary: '#ef5350',
-      accent: '#e57373',
-      background: '#ffebee',
-      paper: '#fff5f5',
-    },
-    animation: {
-      enter: 'rotateIn',
-      stagger: 0.25,
-      duration: 1.2,
-    },
-    layout: {
-      imagePosition: 'center',
-      contentAlignment: 'center',
-    },
-    decor: {
-      pattern: 'art',
-      opacity: 0.15,
-      stickers: ['🎭', '🎪', '🌟'],
-      tapes: ['glitter', 'patterned'],
-      tapeColors: ['rgba(244, 67, 54, 0.7)', 'rgba(229, 115, 115, 0.6)'],
-      handDrawn: ['circle', 'star', 'heart'],
-      paperTexture: 'plain',
+      pattern: 'stars',
+      paperTexture: 'subtle',
+      stickers: ['⭐', '🌙', '🌠'],
+      handDrawn: ['star', 'arrow'],
       cornerDecor: 'artistic',
     },
-    shadow: {
-      intensity: 'medium',
-      color: 'rgba(244, 67, 54, 0.1)',
-    },
-  },
-
-  niangniangshan: {
-    name: '户外探险',
-    colors: {
-      primary: '#26a69a',
-      secondary: '#26c6da',
-      accent: '#4dd0e1',
-      background: '#e0f7fa',
-      paper: '#f0fbfc',
-    },
-    animation: {
-      enter: 'bounceIn',
-      stagger: 0.15,
-      duration: 0.9,
-    },
     layout: {
-      imagePosition: 'top',
       contentAlignment: 'left',
     },
-    decor: {
-      pattern: 'peaks',
-      opacity: 0.1,
-      stickers: ['🎈', '🍀', '📷'],
-      tapes: ['washi', 'transparent'],
-      tapeColors: ['rgba(38, 166, 154, 0.7)', 'rgba(77, 208, 225, 0.6)'],
-      handDrawn: ['arrow', 'doodle'],
-      paperTexture: 'dotted',
-      cornerDecor: 'folded',
-    },
-    shadow: {
-      intensity: 'strong',
-      color: 'rgba(38, 166, 154, 0.15)',
-    },
   },
-
-  datiehua: {
-    name: '传统民俗',
+  烛光晚餐: {
     colors: {
       primary: '#ff7043',
       secondary: '#ff8a65',
-      accent: '#ffab91',
-      background: '#fff3e0',
-      paper: '#fff8f0',
-    },
-    animation: {
-      enter: 'flash',
-      stagger: 0.3,
-      duration: 1.0,
-    },
-    layout: {
-      imagePosition: 'center',
-      contentAlignment: 'center',
-    },
-    decor: {
-      pattern: 'fireworks',
-      opacity: 0.2,
-      stickers: ['🌟', '💫', '✨'],
-      tapes: ['glitter', 'patterned'],
-      tapeColors: ['rgba(255, 112, 67, 0.75)', 'rgba(255, 171, 145, 0.6)'],
-      handDrawn: ['star', 'circle'],
-      paperTexture: 'vintage',
-      cornerDecor: 'torn',
-    },
-    shadow: {
-      intensity: 'strong',
-      color: 'rgba(255, 112, 67, 0.18)',
-    },
-  },
-
-  'botanical-garden': {
-    name: '自然植物',
-    colors: {
-      primary: '#8bc34a',
-      secondary: '#9ccc65',
-      accent: '#aed581',
-      background: '#f1f8e9',
-      paper: '#f7fbf2',
-    },
-    animation: {
-      enter: 'growIn',
-      stagger: 0.1,
-      duration: 0.9,
-    },
-    layout: {
-      imagePosition: 'top',
-      contentAlignment: 'center',
-    },
-    decor: {
-      pattern: 'leaves',
-      opacity: 0.15,
-      stickers: ['🌸', '🍀', '🌺'],
-      tapes: ['washi', 'transparent'],
-      tapeColors: ['rgba(139, 195, 74, 0.7)', 'rgba(174, 213, 129, 0.6)'],
-      handDrawn: ['leaf', 'squiggle'],
-      paperTexture: 'grid',
-      cornerDecor: 'rounded',
-    },
-    shadow: {
-      intensity: 'soft',
-      color: 'rgba(139, 195, 74, 0.12)',
-    },
-  },
-
-  'candlelight-dinner': {
-    name: '浪漫回忆',
-    colors: {
-      primary: '#e91e63',
-      secondary: '#ec407a',
-      accent: '#f06292',
-      background: '#fce4ec',
-      paper: '#fef2f7',
-    },
-    animation: {
-      enter: 'fadeInUp',
-      stagger: 0.2,
-      duration: 1.0,
-    },
-    layout: {
-      imagePosition: 'center',
-      contentAlignment: 'center',
-    },
-    decor: {
-      pattern: 'hearts',
-      opacity: 0.15,
-      stickers: ['💝', '🌸', '✨'],
-      tapes: ['washi', 'glitter'],
-      tapeColors: ['rgba(233, 30, 99, 0.7)', 'rgba(240, 98, 146, 0.6)'],
-      handDrawn: ['heart', 'circle'],
-      paperTexture: 'plain',
-      cornerDecor: 'artistic',
-    },
-    shadow: {
-      intensity: 'soft',
-      color: 'rgba(233, 30, 99, 0.1)',
-    },
-  },
-
-  baihaizi: {
-    name: '高山湖泊',
-    colors: {
-      primary: '#03a9f4',
-      secondary: '#29b6f6',
-      accent: '#4fc3f7',
-      background: '#e1f5fe',
-      paper: '#f0f9ff',
-    },
-    animation: {
-      enter: 'slideInUp',
-      stagger: 0.15,
-      duration: 0.9,
-    },
-    layout: {
-      imagePosition: 'top',
-      contentAlignment: 'left',
-    },
-    decor: {
-      pattern: 'waves',
-      opacity: 0.1,
-      stickers: ['🌟', '💫', '📷'],
-      tapes: ['transparent', 'patterned'],
-      tapeColors: ['rgba(3, 169, 244, 0.7)', 'rgba(79, 195, 247, 0.6)'],
-      handDrawn: ['circle', 'squiggle'],
-      paperTexture: 'lined',
-      cornerDecor: 'folded',
+      background: 'rgba(255, 112, 67, 0.12)',
+      accent: '#f4511e',
+      pageBackground:
+        'linear-gradient(135deg, rgba(255, 138, 101, 0.25) 0%, rgba(255, 171, 145, 0.15) 50%, rgba(255, 205, 210, 0.2) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: 'rgba(3, 169, 244, 0.12)',
-    },
-  },
-
-  aergou: {
-    name: '森林探险',
-    colors: {
-      primary: '#43a047',
-      secondary: '#66bb6a',
-      accent: '#81c784',
-      background: '#e8f5e8',
-      paper: '#f4f9f4',
-    },
-    animation: {
-      enter: 'rotateInDownLeft',
-      stagger: 0.2,
-      duration: 1.0,
-    },
-    layout: {
-      imagePosition: 'top',
-      contentAlignment: 'left',
+      color: '#ff7043',
     },
     decor: {
-      pattern: 'trees',
-      opacity: 0.12,
-      stickers: ['🍀', '🦋', '🌺'],
-      tapes: ['kraft', 'washi'],
-      tapeColors: ['rgba(67, 160, 71, 0.75)', 'rgba(129, 199, 132, 0.6)'],
-      handDrawn: ['leaf', 'doodle'],
-      paperTexture: 'craft',
-      cornerDecor: 'torn',
-    },
-    shadow: {
-      intensity: 'strong',
-      color: 'rgba(67, 160, 71, 0.15)',
-    },
-  },
-
-  qingchengshan: {
-    name: '山水风景',
-    colors: {
-      primary: '#795548',
-      secondary: '#8d6e63',
-      accent: '#a1887f',
-      background: '#efebe9',
-      paper: '#faf7f5',
-    },
-    animation: {
-      enter: 'fadeInDown',
-      stagger: 0.15,
-      duration: 0.9,
+      pattern: 'flames',
+      paperTexture: 'subtle',
+      stickers: ['🕯️', '🍷', '🌹'],
+      handDrawn: ['heart', 'squiggle'],
+      cornerDecor: 'rounded',
     },
     layout: {
-      imagePosition: 'center',
-      contentAlignment: 'center',
+      contentAlignment: 'left',
+    },
+  },
+  青城山: {
+    colors: {
+      primary: '#66bb6a',
+      secondary: '#81c784',
+      background: 'rgba(102, 187, 106, 0.12)',
+      accent: '#43a047',
+      pageBackground:
+        'linear-gradient(135deg, rgba(129, 199, 132, 0.25) 0%, rgba(165, 214, 167, 0.15) 50%, rgba(200, 230, 201, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#66bb6a',
+    },
+    decor: {
+      pattern: 'bamboo',
+      paperTexture: 'subtle',
+      stickers: ['🎋', '🌿', '🍃'],
+      handDrawn: ['leaf', 'doodle'],
+      cornerDecor: 'artistic',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  阿尔沟: {
+    colors: {
+      primary: '#42a5f5',
+      secondary: '#64b5f6',
+      background: 'rgba(66, 165, 245, 0.12)',
+      accent: '#1e88e5',
+      pageBackground:
+        'linear-gradient(135deg, rgba(100, 181, 246, 0.25) 0%, rgba(144, 202, 249, 0.15) 50%, rgba(187, 222, 251, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#42a5f5',
+    },
+    decor: {
+      pattern: 'snowflakes',
+      paperTexture: 'subtle',
+      stickers: ['❄️', '🦌', '🌲'],
+      handDrawn: ['star', 'arrow'],
+      cornerDecor: 'folded',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  '未始的旅途-郎卡雪山': {
+    colors: {
+      primary: '#5c6bc0',
+      secondary: '#7986cb',
+      background: 'rgba(92, 107, 192, 0.12)',
+      accent: '#3949ab',
+      pageBackground:
+        'linear-gradient(135deg, rgba(121, 134, 203, 0.25) 0%, rgba(159, 168, 218, 0.15) 50%, rgba(187, 222, 251, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#5c6bc0',
     },
     decor: {
       pattern: 'mountains',
-      opacity: 0.1,
-      stickers: ['🌟', '🍀', '✨'],
-      tapes: ['transparent', 'kraft'],
-      tapeColors: ['rgba(121, 85, 72, 0.75)', 'rgba(161, 136, 127, 0.6)'],
-      handDrawn: ['circle', 'squiggle'],
-      paperTexture: 'vintage',
-      cornerDecor: 'rounded',
+      paperTexture: 'subtle',
+      stickers: ['🏔️', '⛰️', '🌄'],
+      handDrawn: ['arrow', 'doodle'],
+      cornerDecor: 'torn',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  做戒指: {
+    colors: {
+      primary: '#ffd700',
+      secondary: '#ffec8b',
+      background: 'rgba(255, 215, 0, 0.12)',
+      accent: '#ffb300',
+      pageBackground:
+        'linear-gradient(135deg, rgba(255, 236, 139, 0.25) 0%, rgba(255, 241, 118, 0.15) 50%, rgba(255, 248, 225, 0.2) 100%)',
     },
     shadow: {
       intensity: 'medium',
-      color: 'rgba(121, 85, 72, 0.12)',
+      color: '#ffd700',
+    },
+    decor: {
+      pattern: 'rings',
+      paperTexture: 'subtle',
+      stickers: ['💍', '✨', '💎'],
+      handDrawn: ['heart', 'circle'],
+      cornerDecor: 'rounded',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  大二普: {
+    colors: {
+      primary: '#ab47bc',
+      secondary: '#ba68c8',
+      background: 'rgba(171, 71, 188, 0.12)',
+      accent: '#8e24aa',
+      pageBackground:
+        'linear-gradient(135deg, rgba(186, 104, 200, 0.25) 0%, rgba(209, 196, 233, 0.15) 50%, rgba(225, 190, 231, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#ab47bc',
+    },
+    decor: {
+      pattern: 'dots',
+      paperTexture: 'subtle',
+      stickers: ['🏕️', '🔥', '⭐'],
+      handDrawn: ['squiggle', 'circle'],
+      cornerDecor: 'artistic',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  白海子: {
+    colors: {
+      primary: '#29b6f6',
+      secondary: '#4fc3f7',
+      background: 'rgba(41, 182, 246, 0.12)',
+      accent: '#039be5',
+      pageBackground:
+        'linear-gradient(135deg, rgba(79, 195, 247, 0.25) 0%, rgba(129, 212, 250, 0.15) 50%, rgba(179, 229, 252, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#29b6f6',
+    },
+    decor: {
+      pattern: 'waves',
+      paperTexture: 'subtle',
+      stickers: ['🏔️', '☁️', '❄️'],
+      handDrawn: ['leaf', 'arrow'],
+      cornerDecor: 'folded',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  天府艺术馆: {
+    colors: {
+      primary: '#ec407a',
+      secondary: '#f06292',
+      background: 'rgba(236, 64, 122, 0.12)',
+      accent: '#d81b60',
+      pageBackground:
+        'linear-gradient(135deg, rgba(240, 98, 146, 0.25) 0%, rgba(248, 187, 208, 0.15) 50%, rgba(252, 228, 236, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#ec407a',
+    },
+    decor: {
+      pattern: 'artistic',
+      paperTexture: 'subtle',
+      stickers: ['🎨', '🖼️', '🎭'],
+      handDrawn: ['heart', 'star'],
+      cornerDecor: 'rounded',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  万象城: {
+    colors: {
+      primary: '#ffa726',
+      secondary: '#ffb74d',
+      background: 'rgba(255, 167, 38, 0.12)',
+      accent: '#fb8c00',
+      pageBackground:
+        'linear-gradient(135deg, rgba(255, 183, 77, 0.25) 0%, rgba(255, 204, 128, 0.15) 50%, rgba(255, 224, 178, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#ffa726',
+    },
+    decor: {
+      pattern: 'city',
+      paperTexture: 'subtle',
+      stickers: ['🏙️', '🍽️', '🌃'],
+      handDrawn: ['arrow', 'doodle'],
+      cornerDecor: 'torn',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  打铁花: {
+    colors: {
+      primary: '#ffca28',
+      secondary: '#ffd54f',
+      background: 'rgba(255, 202, 40, 0.12)',
+      accent: '#ffb300',
+      pageBackground:
+        'linear-gradient(135deg, rgba(255, 213, 79, 0.25) 0%, rgba(255, 238, 88, 0.15) 50%, rgba(255, 241, 118, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#ffca28',
+    },
+    decor: {
+      pattern: 'sparks',
+      paperTexture: 'subtle',
+      stickers: ['🎆', '✨', '🔥'],
+      handDrawn: ['star', 'arrow'],
+      cornerDecor: 'torn',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  植物园: {
+    colors: {
+      primary: '#9ccc65',
+      secondary: '#aed581',
+      background: 'rgba(156, 204, 101, 0.12)',
+      accent: '#7cb342',
+      pageBackground:
+        'linear-gradient(135deg, rgba(174, 213, 129, 0.25) 0%, rgba(197, 225, 165, 0.15) 50%, rgba(220, 237, 200, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#9ccc65',
+    },
+    decor: {
+      pattern: 'leaves',
+      paperTexture: 'subtle',
+      stickers: ['🌻', '🌷', '🌼'],
+      handDrawn: ['circle', 'doodle'],
+      cornerDecor: 'artistic',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  乐山: {
+    colors: {
+      primary: '#ff8a65',
+      secondary: '#ffab91',
+      background: 'rgba(255, 138, 101, 0.12)',
+      accent: '#f4511e',
+      pageBackground:
+        'linear-gradient(135deg, rgba(255, 171, 145, 0.25) 0%, rgba(255, 205, 210, 0.15) 50%, rgba(255, 224, 178, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#ff8a65',
+    },
+    decor: {
+      pattern: 'food',
+      paperTexture: 'subtle',
+      stickers: ['🍜', '🍢', '🍡'],
+      handDrawn: ['squiggle', 'circle'],
+      cornerDecor: 'rounded',
+    },
+    layout: {
+      contentAlignment: 'left',
+    },
+  },
+  娘娘山: {
+    colors: {
+      primary: '#7e57c2',
+      secondary: '#9575cd',
+      background: 'rgba(126, 87, 194, 0.12)',
+      accent: '#5e35b1',
+      pageBackground:
+        'linear-gradient(135deg, rgba(149, 117, 205, 0.25) 0%, rgba(179, 157, 219, 0.15) 50%, rgba(206, 190, 233, 0.2) 100%)',
+    },
+    shadow: {
+      intensity: 'medium',
+      color: '#7e57c2',
+    },
+    decor: {
+      pattern: 'clouds',
+      paperTexture: 'subtle',
+      stickers: ['🌺', '🦋', '🌸'],
+      handDrawn: ['leaf', 'squiggle'],
+      cornerDecor: 'folded',
+    },
+    layout: {
+      contentAlignment: 'left',
     },
   },
 }
 
 export const getThemeConfig = themeName => {
-  return themeConfigs[themeName] || themeConfigs['qiqibaba']
+  return themeConfigs[themeName] || themeConfigs['七七八八']
 }
 
 export const getAllThemes = () => {

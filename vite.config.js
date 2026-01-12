@@ -1,12 +1,10 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import memoryImagesPlugin from './vite-plugin-memory-images'
 import viteImagemin from 'vite-plugin-imagemin'
 
 export default defineConfig({
   plugins: [
     vue(),
-    memoryImagesPlugin(),
     viteImagemin({
       gifsicle: {
         optimizationLevel: 7,

@@ -1,8 +1,6 @@
 <template>
   <div class="memory-page">
-    <LoadingScreen v-if="isLoading" :error="error" @retry="handleRetry" />
-
-    <div v-else-if="error" class="error-state">
+    <div v-if="error" class="error-state">
       <p>加载回忆失败: {{ error.message }}</p>
       <button @click="handleRetry" class="retry-button">重试</button>
     </div>
@@ -42,7 +40,7 @@ const props = defineProps({
 
 const emit = defineEmits(['timeline-complete'])
 
-const { timelineItems, isLoading, error, loadMemories } = useMemoryLoader()
+const { timelineItems, error, loadMemories } = useMemoryLoader()
 
 const handleTimelineComplete = () => {
   emit('timeline-complete')
@@ -61,10 +59,6 @@ const handleRetry = async () => {
   height: 100vh;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg,
-      rgba(255, 220, 180, 0.15) 0%,
-      rgba(200, 160, 120, 0.12) 50%,
-      rgba(100, 80, 60, 0.18) 100%);
 
   &::before {
     content: '';

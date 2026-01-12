@@ -5,18 +5,21 @@ import errorHandler, {
 } from "../utils/errorHandler";
 
 const MEMORY_FOLDERS = [
-  "qiqibaba",
-  "leshan",
-  "huajianshan",
-  "daerpu",
-  "tianfu-art-gallery",
-  "niangniangshan",
-  "datiehua",
-  "botanical-garden",
-  "candlelight-dinner",
-  "baihaizi",
-  "aergou",
-  "qingchengshan",
+  "七七八八",
+  "万象城",
+  "乐山",
+  "做戒指",
+  "华尖山",
+  "大二普",
+  "天府艺术馆",
+  "娘娘山",
+  "打铁花",
+  "未始的旅途-郎卡雪山",
+  "植物园",
+  "烛光晚餐",
+  "白海子",
+  "阿尔沟",
+  "青城山"
 ];
 
 const isCdnEnabled = () => {

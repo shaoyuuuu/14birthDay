@@ -14,6 +14,9 @@
     <!-- 卡片内容的转场动画 -->
     <Transition name="card-fade" mode="out-in" @after-enter="handleCardEnter">
       <div class="card-content" :key="index" ref="cardContent" :style="cardContentStyle">
+        <!-- 胶带装饰 - 顶部 -->
+        <div class="tape-decoration tape-top"></div>
+
         <!-- 标题部分 -->
         <div class="card-title-section" ref="titleSectionRef">
           <div class="title-decoration-left"></div>
@@ -176,9 +179,10 @@ const ANIMATION_CONFIG = {
     delay: 0.3
   },
   description: {
-    duration: 0.7,
+    duration: 0.6,
     ease: 'power2.out',
-    y: 20,
+    y: 10,
+    opacity: 0,
     delay: 0.4
   },
   footer: {
@@ -220,6 +224,9 @@ const stopAnimations = () => {
 const resetTextAnimation = () => {
   if (memoryRef.value && props.item.memory) {
     memoryRef.value.innerHTML = props.item.memory
+  }
+  if (descriptionRef.value && props.item.description) {
+    descriptionRef.value.innerHTML = props.item.description
   }
 }
 
@@ -378,20 +385,34 @@ const animateImageSection = () => {
 const animateDescription = () => {
   if (!descriptionRef.value) return
 
-  const anim = gsap.fromTo(descriptionRef.value,
-    {
-      opacity: 0,
-      y: ANIMATION_CONFIG.description.y
-    },
-    {
-      opacity: 1,
-      y: 0,
-      duration: ANIMATION_CONFIG.description.duration,
-      ease: ANIMATION_CONFIG.description.ease,
-      delay: ANIMATION_CONFIG.description.delay
+  nextTick(() => {
+    const descriptionElement = descriptionRef.value
+
+    if (!descriptionElement) return
+
+    const text = descriptionElement.textContent
+    const chars = text.split('')
+
+    descriptionElement.innerHTML = chars.map((char, index) => {
+      if (char === ' ') {
+        return '<span class="char-space"> </span>'
+      }
+      return `<span class="char-animate" style="display: inline-block; opacity: 0; transform: translateY(20px);">${char}</span>`
+    }).join('')
+
+    const charElements = descriptionElement.querySelectorAll('.char-animate')
+
+    if (charElements.length > 0) {
+      gsap.to(charElements, {
+        opacity: 1,
+        y: 0,
+        duration: ANIMATION_CONFIG.text.duration,
+        ease: 'power2.out',
+        stagger: ANIMATION_CONFIG.text.stagger,
+        delay: ANIMATION_CONFIG.description.delay
+      })
     }
-  )
-  elementAnimations.push(anim)
+  })
 }
 
 const animateFooter = () => {
@@ -424,7 +445,6 @@ const paperTextureStyle = ref({})
 
 // 计算卡片内容样式
 const cardContentStyle = computed(() => ({
-  boxShadow: getThemeShadow(themeConfig.value.shadow),
   backgroundColor: themeConfig.value.colors.background,
   backgroundImage: getThemeBackground(themeConfig.value.colors, themeConfig.value.decor)
 }))
@@ -432,8 +452,7 @@ const cardContentStyle = computed(() => ({
 // 计算记忆内容样式
 const memoryStyle = computed(() => ({
   borderLeftColor: themeConfig.value.colors.primary,
-  backgroundColor: `${themeConfig.value.colors.background}e6`,
-  boxShadow: `0 10px 25px ${themeConfig.value.shadow.color}, 0 5px 15px ${themeConfig.value.shadow.color.replace(/0\.\d+/, '0.08')}`
+  backgroundColor: `${themeConfig.value.colors.background}e6`
 }))
 
 onMounted(() => {
@@ -490,18 +509,26 @@ const handleCardEnter = () => {
       rgba(139, 119, 101, 0.03) 2px,
       rgba(139, 119, 101, 0.03) 4px);
 
-  /* 微妙的纸张边缘效果 */
+  /* 增强立体感的阴影效果 */
   box-shadow:
-    0 2px 8px rgba(139, 119, 101, 0.15),
-    0 4px 16px rgba(139, 119, 101, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 1px 2px rgba(139, 119, 101, 0.06),
+    0 2px 4px rgba(139, 119, 101, 0.08),
+    0 4px 8px rgba(139, 119, 101, 0.06),
+    0 8px 16px rgba(139, 119, 101, 0.04),
+    0 16px 32px rgba(139, 119, 101, 0.02),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.03);
 
   &:hover {
-    transform: translateY(-3px);
+    transform: translateY(-4px) rotateX(1deg);
     box-shadow:
-      0 6px 16px rgba(139, 119, 101, 0.22),
-      0 12px 32px rgba(139, 119, 101, 0.18),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      0 2px 4px rgba(139, 119, 101, 0.08),
+      0 4px 8px rgba(139, 119, 101, 0.1),
+      0 8px 16px rgba(139, 119, 101, 0.08),
+      0 16px 32px rgba(139, 119, 101, 0.06),
+      0 32px 64px rgba(139, 119, 101, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(139, 119, 101, 0.04);
   }
 }
 
@@ -524,17 +551,20 @@ const handleCardEnter = () => {
   width: 100%;
   height: 100%;
   background-image:
-    radial-gradient(circle at 20% 30%, rgba(139, 119, 101, 0.03) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(139, 119, 101, 0.02) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(139, 119, 101, 0.015) 0%, transparent 60%);
-  opacity: 0.6;
+    radial-gradient(circle at 20% 30%, rgba(139, 119, 101, 0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(139, 119, 101, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(139, 119, 101, 0.02) 0%, transparent 60%),
+    radial-gradient(circle at 10% 80%, rgba(139, 119, 101, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 20%, rgba(139, 119, 101, 0.02) 0%, transparent 40%);
+  opacity: 0.8;
 }
 
 .ink-splatter {
   position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(139, 119, 101, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 119, 101, 0.1) 0%, transparent 70%);
   filter: blur(2px);
+  box-shadow: 0 1px 2px rgba(139, 119, 101, 0.05);
 }
 
 .ink-1 {
@@ -563,7 +593,6 @@ const handleCardEnter = () => {
   max-width: min(90vw, 700px);
   height: 90vh;
   margin: 0 auto;
-  background: #fffef8;
   border-radius: 2px;
   padding: $spacing-md;
   position: relative;
@@ -572,7 +601,29 @@ const handleCardEnter = () => {
   display: flex;
   flex-direction: column;
   overflow: visible;
-  border: 1px solid rgba(139, 119, 101, 0.2);
+  border: 1px solid rgba(139, 119, 101, 0.3);
+  box-shadow:
+    0 1px 2px rgba(139, 119, 101, 0.06),
+    0 2px 4px rgba(139, 119, 101, 0.08),
+    0 4px 8px rgba(139, 119, 101, 0.06),
+    0 8px 16px rgba(139, 119, 101, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 2px 4px rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.08),
+    inset 0 -2px 4px rgba(139, 119, 101, 0.04);
+
+  &:hover {
+    box-shadow:
+      0 2px 4px rgba(139, 119, 101, 0.08),
+      0 4px 8px rgba(139, 119, 101, 0.1),
+      0 8px 16px rgba(139, 119, 101, 0.08),
+      0 16px 32px rgba(139, 119, 101, 0.06),
+      inset 0 1px 0 rgba(255, 255, 255, 0.95),
+      inset 0 2px 4px rgba(255, 255, 255, 0.7),
+      inset 0 -1px 0 rgba(139, 119, 101, 0.1),
+      inset 0 -2px 4px rgba(139, 119, 101, 0.06);
+    transform: translateY(-3px) rotateX(1deg);
+  }
 
   /* 手绘风格边框 */
   &::before {
@@ -586,33 +637,61 @@ const handleCardEnter = () => {
     border-radius: 4px;
     pointer-events: none;
     z-index: 0;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
   }
 
-  /* 胶带装饰 - 左上角 */
+  /* 内层高光边框 */
   &::after {
     content: '';
     position: absolute;
-    top: -12px;
-    left: 50%;
-    transform: translateX(-50%) rotate(-2deg);
-    width: 120px;
-    height: 28px;
-    background: linear-gradient(135deg,
-        rgba(255, 200, 150, 0.85) 0%,
-        rgba(255, 220, 180, 0.85) 50%,
-        rgba(255, 200, 150, 0.85) 100%);
-    opacity: 0.9;
-    z-index: 10;
-    box-shadow:
-      0 1px 3px rgba(0, 0, 0, 0.1),
-      inset 0 1px 0 rgba(255, 255, 255, 0.4);
-    transition: all 0.3s ease;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 2;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
+}
 
-  &:hover::after {
-    opacity: 1;
-    transform: translateX(-50%) rotate(0deg);
-  }
+/* 胶带装饰 */
+.tape-decoration {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.tape-top {
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  width: 120px;
+  height: 28px;
+  background: linear-gradient(135deg,
+      rgba(255, 200, 150, 0.85) 0%,
+      rgba(255, 220, 180, 0.85) 50%,
+      rgba(255, 200, 150, 0.85) 100%);
+  opacity: 0.9;
+  box-shadow:
+    0 2px 4px rgba(139, 119, 101, 0.15),
+    0 4px 8px rgba(139, 119, 101, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.1);
+  border: 1px solid rgba(255, 240, 220, 0.3);
+}
+
+.card-content:hover .tape-top {
+  opacity: 1;
+  transform: translateX(-50%) rotate(0deg);
+  box-shadow:
+    0 3px 6px rgba(139, 119, 101, 0.2),
+    0 6px 12px rgba(139, 119, 101, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.12);
+  border-color: rgba(255, 240, 220, 0.4);
 }
 
 .card-title-section {
@@ -622,8 +701,14 @@ const handleCardEnter = () => {
   z-index: 3;
   padding-top: 16px;
   padding-bottom: 4px;
+  transition: all 0.3s ease;
 }
 
+.card-content:hover .card-title-section {
+  transform: translateY(-2px);
+}
+
+/* 手绘装饰圆圈 */
 .title-decoration-left,
 .title-decoration-right {
   position: absolute;
@@ -718,11 +803,17 @@ const handleCardEnter = () => {
   border-radius: 20px;
   border: 1px dashed rgba(196, 167, 125, 0.3);
   transition: all 0.3s ease;
+  box-shadow:
+    0 1px 2px rgba(139, 119, 101, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
 
   &:hover {
     background: rgba(255, 248, 240, 0.8);
     border-color: rgba(196, 167, 125, 0.5);
-    transform: translateX(-50%) translateY(-2px);
+    transform: translateX(-50%) translateY(-3px);
+    box-shadow:
+      0 2px 4px rgba(139, 119, 101, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
   }
 
   .date-icon {
@@ -736,6 +827,38 @@ const handleCardEnter = () => {
   margin: 8px 0;
   transform-style: preserve-3d;
   perspective: 1000px;
+
+  .card-image {
+    width: 100%;
+    max-height: 350px;
+    object-fit: contain;
+    border-radius: 2px;
+    box-shadow:
+      0 2px 4px rgba(139, 119, 101, 0.08),
+      0 4px 8px rgba(139, 119, 101, 0.06),
+      0 8px 16px rgba(139, 119, 101, 0.04),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 2px 4px rgba(255, 255, 255, 0.4),
+      inset 0 -1px 0 rgba(139, 119, 101, 0.06),
+      inset 0 -2px 4px rgba(139, 119, 101, 0.04);
+    border: 2px solid rgba(196, 167, 125, 0.25);
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+
+    &:hover {
+      box-shadow:
+        0 4px 8px rgba(139, 119, 101, 0.12),
+        0 8px 16px rgba(139, 119, 101, 0.1),
+        0 16px 32px rgba(139, 119, 101, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+        inset 0 2px 4px rgba(255, 255, 255, 0.5),
+        inset 0 -1px 0 rgba(139, 119, 101, 0.08),
+        inset 0 -2px 4px rgba(139, 119, 101, 0.06);
+      transform: translateY(-3px) scale(1.01);
+      border-color: rgba(196, 167, 125, 0.4);
+    }
+  }
 }
 
 .card-text-section {
@@ -751,14 +874,51 @@ const handleCardEnter = () => {
 
 .card-description {
   font-size: $font-size-md;
+  text-align: center;
   color: #5d4e37;
   line-height: 1.9;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   letter-spacing: 0.5px;
   font-family: 'Georgia', serif;
   font-weight: 400;
   position: relative;
-  padding: 0 8px;
+  padding: $spacing-xs;
+  border-radius: 2px;
+  background: linear-gradient(135deg,
+      rgba(255, 245, 235, 0.9) 0%,
+      rgba(255, 235, 215, 0.85) 100%);
+  box-shadow:
+    0 1px 2px rgba(139, 119, 101, 0.04),
+    0 2px 4px rgba(139, 119, 101, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.04);
+  border: 1px solid rgba(210, 180, 140, 0.3);
+  transition: all 0.3s ease;
+
+  /* 纸张纹理 */
+  background-image:
+    repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(180, 140, 100, 0.02) 2px,
+      rgba(180, 140, 100, 0.02) 4px),
+    repeating-linear-gradient(90deg,
+      transparent,
+      transparent 2px,
+      rgba(180, 140, 100, 0.02) 2px,
+      rgba(180, 140, 100, 0.02) 4px),
+    linear-gradient(135deg,
+      rgba(255, 245, 235, 0.9) 0%,
+      rgba(255, 235, 215, 0.85) 100%);
+
+  &:hover {
+    box-shadow:
+      0 2px 4px rgba(139, 119, 101, 0.06),
+      0 4px 8px rgba(139, 119, 101, 0.05),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6),
+      inset 0 -1px 0 rgba(139, 119, 101, 0.06);
+    border-color: rgba(210, 180, 140, 0.45);
+  }
 }
 
 .card-memory-wrapper {
@@ -782,15 +942,24 @@ const handleCardEnter = () => {
   opacity: 0.75;
   z-index: 10;
   box-shadow:
-    0 1px 3px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    0 1px 2px rgba(139, 119, 101, 0.1),
+    0 2px 4px rgba(139, 119, 101, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.08);
   transform: rotate(3deg);
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 240, 220, 0.25);
 }
 
 .card-memory-wrapper:hover .memory-tape {
   opacity: 0.9;
   transform: rotate(0deg);
+  box-shadow:
+    0 2px 4px rgba(139, 119, 101, 0.12),
+    0 4px 8px rgba(139, 119, 101, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.1);
+  border-color: rgba(255, 240, 220, 0.35);
 }
 
 .card-memory {
@@ -803,9 +972,6 @@ const handleCardEnter = () => {
   font-family: 'Georgia', serif;
   border-left: 3px solid #c4a77d;
   padding: $spacing-md;
-  background: linear-gradient(135deg,
-      rgba(255, 248, 240, 0.95) 0%,
-      rgba(255, 240, 220, 0.9) 100%);
   border-radius: 2px;
   margin-bottom: 0;
   margin-top: 0;
@@ -813,12 +979,36 @@ const handleCardEnter = () => {
   min-height: 120px;
   overflow-y: auto;
   box-shadow:
-    0 2px 8px rgba(139, 119, 101, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    0 1px 2px rgba(139, 119, 101, 0.06),
+    0 2px 4px rgba(139, 119, 101, 0.08),
+    0 4px 8px rgba(139, 119, 101, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 2px 4px rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(139, 119, 101, 0.08),
+    inset 0 -2px 4px rgba(139, 119, 101, 0.06);
   transition: all 0.3s ease;
-  border: 1px solid rgba(196, 167, 125, 0.2);
+  border: 1px solid rgba(196, 167, 125, 0.25);
   position: relative;
   overflow: hidden;
+  background: linear-gradient(135deg,
+      rgba(255, 248, 240, 0.95) 0%,
+      rgba(255, 240, 220, 0.9) 100%);
+
+  /* 纸张纹理 */
+  background-image:
+    repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 119, 101, 0.03) 2px,
+      rgba(139, 119, 101, 0.03) 4px),
+    repeating-linear-gradient(90deg,
+      transparent,
+      transparent 2px,
+      rgba(139, 119, 101, 0.03) 2px,
+      rgba(139, 119, 101, 0.03) 4px),
+    linear-gradient(135deg,
+      rgba(255, 248, 240, 0.95) 0%,
+      rgba(255, 240, 220, 0.9) 100%);
 
   /* 手写风格装饰 */
   &::before {
@@ -839,10 +1029,15 @@ const handleCardEnter = () => {
 
   &:hover {
     box-shadow:
-      0 4px 12px rgba(139, 119, 101, 0.12),
-      inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      0 2px 4px rgba(139, 119, 101, 0.08),
+      0 4px 8px rgba(139, 119, 101, 0.1),
+      0 8px 16px rgba(139, 119, 101, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.8),
+      inset 0 2px 4px rgba(255, 255, 255, 0.6),
+      inset 0 -1px 0 rgba(139, 119, 101, 0.1),
+      inset 0 -2px 4px rgba(139, 119, 101, 0.08);
     border-color: rgba(196, 167, 125, 0.4);
-    transform: translateX(2px);
+    transform: translateX(3px);
   }
 
   /* 自定义滚动条 */
@@ -894,14 +1089,26 @@ const handleCardEnter = () => {
   right: 20px;
   z-index: 5;
   pointer-events: none;
+  transition: all 0.3s ease;
+}
+
+.card-content:hover .card-footer-decoration {
+  transform: translateY(-2px) scale(1.05);
 }
 
 .footer-sticker {
   font-size: 28px;
   opacity: 0.6;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  filter: none;
   position: relative;
   z-index: 2;
+  transition: all 0.3s ease;
+  text-shadow: 0 1px 2px rgba(139, 119, 101, 0.1);
+}
+
+.card-content:hover .footer-sticker {
+  opacity: 0.8;
+  text-shadow: 0 2px 4px rgba(139, 119, 101, 0.15);
 }
 
 .footer-doodle {
@@ -913,6 +1120,14 @@ const handleCardEnter = () => {
   border: 2px solid rgba(196, 167, 125, 0.3);
   border-radius: 50%;
   opacity: 0.4;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 2px rgba(139, 119, 101, 0.05);
+}
+
+.card-content:hover .footer-doodle {
+  opacity: 0.6;
+  border-color: rgba(196, 167, 125, 0.5);
+  box-shadow: 0 2px 4px rgba(139, 119, 101, 0.08);
 }
 
 /* 卡片切换动画 */

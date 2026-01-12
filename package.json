@@ -8,8 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "vite build && gh-pages -d dist --dotfiles",
-    "update-images": "node update-images.js",
     "optimize-images": "node optimize-images.js",
+    "generate-configs": "node scripts/generate-configs.js",
+    "update-memories": "node scripts/update-memories.js",
+    "update-memory-configs": "node scripts/update-memory-configs.js",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore",
     "format": "prettier --write src/"
   },

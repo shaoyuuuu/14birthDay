@@ -266,7 +266,7 @@ const getStickerStyle = (index) => {
   position: absolute;
   font-size: 28px;
   opacity: 0.7;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.08));
 }
 
 .hand-drawn-elements {
