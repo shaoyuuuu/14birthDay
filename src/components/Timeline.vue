@@ -16,7 +16,8 @@
     </div>
 
     <div class="progress-bar" v-if="items.length > 0">
-      <StickFigure :progress="progressPercentage" :size="20" :comment="currentComment" :is-sliding="isSliding" />
+      <StickFigure :progress="progressPercentage" :size="20" :comment="currentComment" :is-sliding="isSliding"
+        :front-avatar="stickFigureAvatars.frontAvatar" :rear-avatar="stickFigureAvatars.rearAvatar" />
     </div>
   </div>
 </template>
@@ -28,7 +29,7 @@ import TimelineCard from './TimelineCard.vue'
 import FinalMemoryCard from './FinalMemoryCard.vue'
 import useImagePreload from '../composables/useImagePreload'
 import { getCardBackground } from '../utils/themeUtils'
-import { getThemeConfig } from '../data/themeConfigs'
+import { loadThemeConfigs, getThemeConfig, loadTextConfigs, getTextConfigs } from '../utils/configLoader'
 
 const props = defineProps({
   items: {
@@ -51,11 +52,14 @@ const currentIndex = ref(0)
 const isSliding = ref(false)
 const slideDirection = ref('next')
 let touchStartX = 0
+let touchStartY = 0
 let autoPlayTimer = null
+const textConfigs = ref(null)
 
 const ANIMATION_DURATION = 0.6
 const ANIMATION_EASE = 'power2.inOut'
 const SWIPE_THRESHOLD = 50
+const VERTICAL_SWIPE_THRESHOLD = 30
 const COMPLETE_DELAY = 2000
 
 const transitionName = computed(() => {
@@ -76,6 +80,19 @@ const currentComment = computed(() => {
     return '未完待续...'
   }
   return props.items[currentIndex.value]?.comment || ''
+})
+
+const stickFigureAvatars = computed(() => {
+  if (!textConfigs.value?.stickFigure) {
+    return {
+      frontAvatar: 'https://picsum.photos/id/1005/50/50',
+      rearAvatar: 'https://picsum.photos/id/1027/50/50'
+    }
+  }
+  return {
+    frontAvatar: textConfigs.value.stickFigure.frontAvatar,
+    rearAvatar: textConfigs.value.stickFigure.rearAvatar
+  }
 })
 
 const currentPageBackground = computed(() => {
@@ -106,14 +123,22 @@ const prevItem = () => goToIndex(currentIndex.value - 1)
 
 const handleTouchStart = (e) => {
   touchStartX = e.touches[0].clientX
+  touchStartY = e.touches[0].clientY
 }
 
 const handleTouchEnd = (e) => {
   const touchEndX = e.changedTouches[0].clientX
-  const swipeDistance = touchEndX - touchStartX
+  const touchEndY = e.changedTouches[0].clientY
 
-  if (Math.abs(swipeDistance) > SWIPE_THRESHOLD) {
-    swipeDistance < 0 ? nextItem() : prevItem()
+  const swipeDistanceX = touchEndX - touchStartX
+  const swipeDistanceY = touchEndY - touchStartY
+
+  if (Math.abs(swipeDistanceY) > VERTICAL_SWIPE_THRESHOLD) {
+    return
+  }
+
+  if (Math.abs(swipeDistanceX) > SWIPE_THRESHOLD) {
+    swipeDistanceX < 0 ? nextItem() : prevItem()
   }
 }
 
@@ -160,9 +185,19 @@ watch(() => props.autoPlay, (newValue) => {
 
 const { preloadImages, extractImagesFromTimeline } = useImagePreload()
 
-onMounted(() => {
-  if (props.autoPlay) {
-    startAutoPlay()
+onMounted(async () => {
+  try {
+    await loadThemeConfigs()
+    await loadTextConfigs()
+    textConfigs.value = getTextConfigs()
+    if (props.autoPlay) {
+      startAutoPlay()
+    }
+  } catch (error) {
+    console.error('Failed to load configs:', error)
+    if (props.autoPlay) {
+      startAutoPlay()
+    }
   }
 })
 </script>

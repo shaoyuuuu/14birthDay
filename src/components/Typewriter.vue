@@ -12,7 +12,7 @@
       <div class="decoration-glow glow-1"></div>
       <div class="decoration-glow glow-2"></div>
     </div>
-    
+
     <!-- 打字机效果容器 -->
     <div class="typewriter-container">
       <!-- 卡片内容区域 -->
@@ -31,7 +31,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 魔羯座元素（星座装饰） -->
     <div class="capricorn-element">
       <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -52,6 +52,7 @@
 // 引入Vue 3 Composition API的ref和onMounted
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import gsap from 'gsap'
+import { loadTextConfigs, getTextConfigs } from '../utils/configLoader.js'
 
 // 定义组件属性
 const props = defineProps({
@@ -60,11 +61,7 @@ const props = defineProps({
    */
   texts: {
     type: Array,
-    default: () => [
-      '亲爱的，生日快乐！',
-      '今天是你的特别日子，',
-      '让我们一起回顾我们的美好时光...'
-    ]
+    default: () => []
   },
   /**
    * 打字速度（毫秒/字符）
@@ -85,6 +82,8 @@ const charIndex = ref(0) // 当前文本的字符索引
 const timer = ref(null) // 打字动画定时器
 const showStartButton = ref(false) // 是否显示开始回忆按钮
 const accumulatedText = ref('') // 累积的文本内容
+const localTexts = ref(props.texts) // 本地文本配置
+const localSpeed = ref(props.speed) // 本地速度配置
 
 // 动画管理
 let cardAnimation = null
@@ -97,18 +96,23 @@ let capricornAnimation = null
  * 实现逐字显示文本的效果，支持多段文本换行
  */
 const type = () => {
-  const currentText = props.texts[textIndex.value] // 获取当前要显示的文本
+  if (!localTexts.value || localTexts.value.length === 0) {
+    console.warn('No texts to display')
+    return
+  }
+
+  const currentText = localTexts.value[textIndex.value] // 获取当前要显示的文本
 
   // 逐字显示当前文本
   if (charIndex.value <= currentText.length) {
     displayText.value = accumulatedText.value + currentText.substring(0, charIndex.value)
     charIndex.value++
-    timer.value = setTimeout(type, props.speed)
+    timer.value = setTimeout(type, localSpeed.value)
     return
   }
 
   // 检查是否为最后一段文本
-  if (textIndex.value === props.texts.length - 1) {
+  if (textIndex.value === localTexts.value.length - 1) {
     showStartButton.value = true // 显示开始回忆按钮
     nextTick(() => {
       animateButton() // 等待DOM更新后触发按钮动画
@@ -157,38 +161,38 @@ const animateDecorations = () => {
   const stars = document.querySelectorAll('.decoration-star')
   const circles = document.querySelectorAll('.decoration-circle')
   const glows = document.querySelectorAll('.decoration-glow')
-  
+
   gsap.fromTo(stars,
     { opacity: 0, scale: 0 },
-    { 
-      opacity: 1, 
-      scale: 1, 
-      duration: 0.6, 
-      stagger: 0.1, 
+    {
+      opacity: 1,
+      scale: 1,
+      duration: 0.6,
+      stagger: 0.1,
       ease: 'back.out(1.7)',
       delay: 0.3
     }
   )
-  
+
   gsap.fromTo(circles,
     { opacity: 0, scale: 0.8 },
-    { 
-      opacity: 1, 
-      scale: 1, 
-      duration: 0.8, 
-      stagger: 0.2, 
+    {
+      opacity: 1,
+      scale: 1,
+      duration: 0.8,
+      stagger: 0.2,
       ease: 'power2.out',
       delay: 0.5
     }
   )
-  
+
   gsap.fromTo(glows,
     { opacity: 0, scale: 0.5 },
-    { 
-      opacity: 1, 
-      scale: 1, 
-      duration: 1, 
-      stagger: 0.3, 
+    {
+      opacity: 1,
+      scale: 1,
+      duration: 1,
+      stagger: 0.3,
       ease: 'power2.out',
       delay: 0.7
     }
@@ -231,11 +235,29 @@ const animateCapricorn = () => {
 }
 
 // 组件挂载后开始打字效果
-onMounted(() => {
-  type()
-  animateCardEnter()
-  animateDecorations()
-  animateCapricorn()
+onMounted(async () => {
+  try {
+    await loadTextConfigs()
+    const configs = getTextConfigs()
+    if (configs && configs.typewriter) {
+      if (localTexts.value.length === 0) {
+        localTexts.value = configs.typewriter.texts
+      }
+      if (localSpeed.value === 100) {
+        localSpeed.value = configs.typewriter.speed
+      }
+    }
+    type()
+    animateCardEnter()
+    animateDecorations()
+    animateCapricorn()
+  } catch (error) {
+    console.error('Failed to load text configs:', error)
+    type()
+    animateCardEnter()
+    animateDecorations()
+    animateCapricorn()
+  }
 })
 
 // 组件卸载前清除定时器和动画，避免内存泄漏
@@ -368,10 +390,13 @@ onUnmounted(() => {
 }
 
 @keyframes twinkle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 0.3;
     transform: scale(1);
   }
+
   50% {
     opacity: 1;
     transform: scale(1.2);
@@ -379,10 +404,13 @@ onUnmounted(() => {
 }
 
 @keyframes float {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: translateY(0) rotate(0deg);
     opacity: 0.3;
   }
+
   50% {
     transform: translateY(-20px) rotate(180deg);
     opacity: 0.6;
@@ -390,10 +418,13 @@ onUnmounted(() => {
 }
 
 @keyframes pulse {
-  0%, 100% {
+
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.3;
   }
+
   50% {
     transform: scale(1.1);
     opacity: 0.5;
@@ -414,29 +445,6 @@ onUnmounted(() => {
   text-align: center;
   transition: all 0.5s ease;
   position: relative;
-}
-
-.card-content::before {
-  content: '';
-  position: absolute;
-  top: -2px;
-  left: -2px;
-  right: -2px;
-  bottom: -2px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
-  border-radius: 20px;
-  z-index: -1;
-  opacity: 0;
-  animation: cardGlow 3s ease-in-out infinite;
-}
-
-@keyframes cardGlow {
-  0%, 100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 1;
-  }
 }
 
 h1 {
@@ -485,9 +493,12 @@ h1::after {
 }
 
 @keyframes cursorBlink {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
   }
+
   50% {
     opacity: 0;
   }
@@ -515,7 +526,7 @@ h1::after {
   border-radius: $border-radius-full;
   cursor: pointer;
   transition: all $transition-fast cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 
+  box-shadow:
     0 4px 15px rgba(0, 0, 0, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
@@ -541,19 +552,17 @@ h1::after {
   left: -100%;
   width: 100%;
   height: 100%;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.6),
-    transparent
-  );
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(255, 255, 255, 0.6),
+      transparent);
   transition: left 0.6s ease;
   z-index: 1;
 }
 
 .start-button:hover {
   transform: translateY(-4px) scale(1.05);
-  box-shadow: 
+  box-shadow:
     0 12px 35px rgba(0, 0, 0, 0.2),
     0 6px 20px rgba(0, 0, 0, 0.1),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -572,17 +581,20 @@ h1::after {
 
 .start-button:active {
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 
+  box-shadow:
     0 8px 25px rgba(0, 0, 0, 0.15),
     0 4px 15px rgba(0, 0, 0, 0.08),
     inset 0 1px 0 rgba(255, 255, 255, 0.9);
 }
 
 @keyframes sparkle {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1) rotate(0deg);
   }
+
   50% {
     opacity: 0.7;
     transform: scale(1.1) rotate(10deg);

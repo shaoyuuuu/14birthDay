@@ -1,15 +1,15 @@
 <template>
-  <div class="final-memory-card" ref="cardRef">
+  <div class="final-memory-card" ref="cardRef" v-if="textConfigs">
     <div class="card-background-decorations">
       <div class="paper-texture"></div>
       <div class="ink-splatter ink-1"></div>
       <div class="ink-splatter ink-2"></div>
       <div class="birthday-decorations">
         <div v-for="(balloon, index) in balloons" :key="`balloon-${index}`" class="balloon"
-          :style="balloonStyles[index]">
+          :style="balloonStyles[index] || {}">
           {{ balloon }}
         </div>
-        <div v-for="(star, index) in stars" :key="`star-${index}`" class="star" :style="starStyles[index]">
+        <div v-for="(star, index) in stars" :key="`star-${index}`" class="star" :style="starStyles[index] || {}">
           {{ star }}
         </div>
       </div>
@@ -17,15 +17,15 @@
 
     <div class="card-content" ref="cardContent">
       <div class="title-section">
-        <div class="birthday-cake">🎂</div>
-        <h3 class="card-number">未完待续...</h3>
-        <h2 class="card-title">我们的故事还在继续</h2>
+        <div class="birthday-cake">{{ textConfigs.finalCard.decorations.cake }}</div>
+        <h3 class="card-number">{{ textConfigs.finalCard.title.number }}</h3>
+        <h2 class="card-title">{{ textConfigs.finalCard.title.main }}</h2>
         <div class="title-underline"></div>
       </div>
 
       <div class="message-section">
-        <p class="main-message">每一个瞬间都是珍贵的回忆</p>
-        <p class="sub-message">期待与你一起创造更多美好的时光</p>
+        <p class="main-message">{{ textConfigs.finalCard.message.main }}</p>
+        <p class="sub-message">{{ textConfigs.finalCard.message.sub }}</p>
       </div>
 
       <div class="envelope-section" ref="envelopeSection">
@@ -37,65 +37,62 @@
             <div class="envelope-bottom"></div>
             <div class="envelope-front">
               <div class="envelope-text" v-if="!isEnvelopeOpened">
-                <span class="receive-text">接收祝福</span>
+                <span class="receive-text">{{ textConfigs.finalCard.envelope.receiveText }}</span>
               </div>
             </div>
             <div class="envelope-flap" ref="envelopeFlap">
-              <span class="click-hint" v-if="!isEnvelopeOpened">💌</span>
+              <span class="click-hint" v-if="!isEnvelopeOpened">{{ textConfigs.finalCard.envelope.clickHint }}</span>
               <div class="flap-inner"></div>
               <div class="flap-shadow"></div>
             </div>
           </div>
-
-          <transition name="letter-fly">
-            <div class="letter-3d" v-if="isEnvelopeOpened" ref="letterRef" @click.stop="closeEnvelope">
-              <div class="letter-front">
-                <div class="letter-paper">
-                  <div class="letter-lines"></div>
-                  <div class="letter-content">
-                    <div class="letter-header">
-                      <span class="letter-heart">💕</span>
-                    </div>
-                    <div class="letter-body">
-                      <p class="letter-text">亲爱的：</p>
-                      <p class="letter-message">感谢你出现在我的生命中，</p>
-                      <p class="letter-message">让每一个平凡的日子都变得闪闪发光。</p>
-                      <p class="letter-message">在这个特别的日子里，</p>
-                      <p class="letter-message">祝你生日快乐！</p>
-                      <p class="letter-message">愿所有的美好都如期而至，</p>
-                      <p class="letter-message">愿我们的故事永远未完待续。</p>
-                      <p class="letter-signature">永远爱你的 ❤️</p>
-                    </div>
-                    <div class="letter-footer">
-                      <div class="letter-decoration">✨</div>
-                    </div>
-                  </div>
-                  <div class="letter-border"></div>
-                  <div class="letter-corner top-left"></div>
-                  <div class="letter-corner top-right"></div>
-                  <div class="letter-corner bottom-left"></div>
-                  <div class="letter-corner bottom-right"></div>
-                </div>
-              </div>
-              <div class="letter-back"></div>
-              <div class="letter-top"></div>
-              <div class="letter-bottom"></div>
-              <div class="letter-left"></div>
-              <div class="letter-right"></div>
-              <div class="close-hint">点击关闭</div>
-            </div>
-          </transition>
         </div>
       </div>
 
-      <div class="footer-decoration">
-        <div class="footer-sticker">💝</div>
-        <div class="footer-doodle"></div>
-        <div class="birthday-badges">
-          <span class="badge">🎈</span>
-          <span class="badge">🎉</span>
-          <span class="badge">🎁</span>
+      <transition name="letter-fly">
+        <div class="letter-overlay" v-if="isEnvelopeOpened">
+          <div class="letter-3d" ref="letterRef" @click.stop="closeEnvelope">
+            <div class="letter-front">
+              <div class="letter-paper">
+                <div class="letter-lines"></div>
+                <div class="letter-content">
+                  <div class="letter-header">
+                    <span class="letter-heart">{{ textConfigs.finalLetter.header.heart }}</span>
+                  </div>
+                  <div class="letter-body">
+                    <p class="letter-text">{{ textConfigs.finalLetter.body.greeting }}</p>
+                    <p v-for="(msg, index) in textConfigs.finalLetter.body.messages" :key="index"
+                      class="letter-message">{{ msg }}</p>
+                    <p class="letter-signature">{{ textConfigs.finalLetter.body.signature }}</p>
+                  </div>
+                  <div class="letter-footer">
+                    <div class="letter-decoration">{{ textConfigs.finalLetter.footer.decoration }}</div>
+                  </div>
+                </div>
+                <div class="letter-border"></div>
+                <div class="letter-corner top-left"></div>
+                <div class="letter-corner top-right"></div>
+                <div class="letter-corner bottom-left"></div>
+                <div class="letter-corner bottom-right"></div>
+              </div>
+            </div>
+            <div class="letter-back"></div>
+            <div class="letter-top"></div>
+            <div class="letter-bottom"></div>
+            <div class="letter-left"></div>
+            <div class="letter-right"></div>
+            <div class="close-hint">{{ textConfigs.finalCard.envelope.closeHint }}</div>
+          </div>
         </div>
+      </transition>
+    </div>
+
+    <div class="footer-decoration">
+      <div class="footer-sticker">{{ textConfigs.finalCard.decorations.footerSticker }}</div>
+      <div class="footer-doodle"></div>
+      <div class="birthday-badges">
+        <span v-for="(badge, index) in textConfigs.finalCard.decorations.badges" :key="index" class="badge">{{ badge
+          }}</span>
       </div>
     </div>
   </div>
@@ -104,6 +101,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import gsap from 'gsap'
+import { loadTextConfigs, getTextConfigs } from '../utils/configLoader.js'
 
 const cardRef = ref(null)
 const cardContent = ref(null)
@@ -117,11 +115,19 @@ let enterAnimations = []
 let envelopeAnimation = null
 let decorationAnimations = []
 
-const balloons = ['🎈', '🎈', '🎈']
-const stars = ['⭐', '✨', '⭐', '✨']
+const textConfigs = ref(null)
+
+const balloons = ref([])
+const stars = ref([])
 
 const balloonStyles = ref([])
 const starStyles = ref([])
+
+const screenWidth = ref(window.innerWidth)
+
+const handleResize = () => {
+  screenWidth.value = window.innerWidth
+}
 
 const ANIMATION_CONFIG = {
   cardEnter: {
@@ -135,7 +141,15 @@ const ANIMATION_CONFIG = {
     flapRotation: -180,
     flapDuration: 0.6,
     flapEase: 'power2.inOut',
-    letterY: -300,
+    get letterYPercent() {
+      if (screenWidth.value < 640) {
+        return -20
+      } else if (screenWidth.value < 768) {
+        return -24
+      } else {
+        return -30
+      }
+    },
     letterRotation: -2,
     letterDuration: 0.8,
     letterDelay: 0.15,
@@ -181,25 +195,29 @@ const ANIMATION_CONFIG = {
 }
 
 const initializeDecorationStyles = () => {
-  balloonStyles.value = balloons.map((_, index) => ({
-    position: 'absolute',
-    left: `${15 + index * 25}%`,
-    top: `${8 + (index % 2) * 12}%`,
-    fontSize: `${1.8 + (index % 2) * 0.4}rem`,
-    opacity: 0.6,
-    transform: `rotate(${-8 + index * 4}deg)`,
-    animationDelay: `${index * 0.4}s`
-  }))
+  if (Array.isArray(balloons.value)) {
+    balloonStyles.value = balloons.value.map((_, index) => ({
+      position: 'absolute',
+      left: `${15 + index * 25}%`,
+      top: `${8 + (index % 2) * 12}%`,
+      fontSize: `${1.8 + (index % 2) * 0.4}rem`,
+      opacity: 0.6,
+      transform: `rotate(${-8 + index * 4}deg)`,
+      animationDelay: `${index * 0.4}s`
+    }))
+  }
 
-  starStyles.value = stars.map((_, index) => ({
-    position: 'absolute',
-    left: `${10 + (index % 3) * 25}%`,
-    top: `${15 + (index % 2) * 18}%`,
-    fontSize: `${1 + (index % 2) * 0.4}rem`,
-    opacity: 0.5,
-    transform: `rotate(${-12 + index * 6}deg)`,
-    animationDelay: `${index * 0.3}s`
-  }))
+  if (Array.isArray(stars.value)) {
+    starStyles.value = stars.value.map((_, index) => ({
+      position: 'absolute',
+      left: `${10 + (index % 3) * 25}%`,
+      top: `${15 + (index % 2) * 18}%`,
+      fontSize: `${1 + (index % 2) * 0.4}rem`,
+      opacity: 0.5,
+      transform: `rotate(${-12 + index * 6}deg)`,
+      animationDelay: `${index * 0.3}s`
+    }))
+  }
 }
 
 const animateDecorations = () => {
@@ -254,7 +272,7 @@ const closeEnvelope = () => {
   })
 
   timeline.to(letterRef.value, {
-    y: 0,
+    yPercent: 0,
     rotation: 0,
     scale: 1,
     opacity: ANIMATION_CONFIG.closeEnvelope.letterOpacity,
@@ -280,24 +298,19 @@ const animateEnvelopeOpening = () => {
     ease: ANIMATION_CONFIG.envelope.flapEase
   })
 
-  timeline.to(letterRef.value, {
-    y: ANIMATION_CONFIG.envelope.letterY,
-    rotation: ANIMATION_CONFIG.envelope.letterRotation,
-    rotateX: ANIMATION_CONFIG.envelope.letterRotateX,
-    rotateY: ANIMATION_CONFIG.envelope.letterRotateY,
-    duration: ANIMATION_CONFIG.envelope.letterDuration,
-    ease: 'power3.out',
-    delay: ANIMATION_CONFIG.envelope.letterDelay
-  }, '-=0.3')
-
-  timeline.to(letterRef.value, {
-    scale: ANIMATION_CONFIG.envelope.letterScale,
-    rotation: 0,
-    rotateX: 0,
-    rotateY: 0,
-    duration: ANIMATION_CONFIG.envelope.letterScaleDuration,
-    ease: ANIMATION_CONFIG.envelope.letterScaleEase
-  }, '-=0.5')
+  timeline.fromTo(letterRef.value,
+    {
+      opacity: 0,
+      scale: 0.8
+    },
+    {
+      opacity: 1,
+      scale: 1,
+      duration: ANIMATION_CONFIG.envelope.letterDuration,
+      ease: 'power3.out',
+      delay: ANIMATION_CONFIG.envelope.letterDelay
+    }
+  )
 }
 
 const animateCardEnter = () => {
@@ -346,15 +359,37 @@ const stopAnimations = () => {
   decorationAnimations = []
 }
 
-onMounted(() => {
-  initializeDecorationStyles()
-  nextTick(() => {
-    animateCardEnter()
-    animateDecorations()
-  })
+onMounted(async () => {
+  try {
+    await loadTextConfigs()
+    textConfigs.value = getTextConfigs()
+    if (textConfigs.value && textConfigs.value.finalCard) {
+      balloons.value = textConfigs.value.finalCard.decorations.balloons || []
+      stars.value = textConfigs.value.finalCard.decorations.stars || []
+    }
+    initializeDecorationStyles()
+
+    window.addEventListener('resize', handleResize)
+
+    nextTick(() => {
+      animateCardEnter()
+      animateDecorations()
+    })
+  } catch (error) {
+    console.error('Failed to load text configs:', error)
+    initializeDecorationStyles()
+
+    window.addEventListener('resize', handleResize)
+
+    nextTick(() => {
+      animateCardEnter()
+      animateDecorations()
+    })
+  }
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
   stopAnimations()
 })
 </script>
@@ -449,13 +484,14 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 40px 20px;
+  overflow-y: auto;
 }
 
 .title-section {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 30px;
   position: relative;
 
   .birthday-cake {
@@ -504,7 +540,7 @@ onUnmounted(() => {
 
 .message-section {
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
   max-width: 500px;
 
   .main-message {
@@ -525,7 +561,13 @@ onUnmounted(() => {
 
 .envelope-section {
   position: relative;
-  margin-bottom: 50px;
+  margin: 20px 0;
+  width: 100%;
+  height: 700px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  perspective: 1200px;
 }
 
 .envelope-container {
@@ -533,7 +575,6 @@ onUnmounted(() => {
   width: 260px;
   height: 170px;
   cursor: pointer;
-  perspective: 1200px;
   user-select: none;
   -webkit-user-select: none;
   -moz-user-select: none;
@@ -729,40 +770,38 @@ onUnmounted(() => {
   }
 }
 
+.letter-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 .letter-3d {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 240px;
-  height: 400px;
+  position: relative;
+  width: 320px;
+  height: 600px;
   z-index: 10;
   cursor: pointer;
   transform-style: preserve-3d;
   perspective: 1000px;
-  transition: transform 0.3s ease;
   outline: none;
   -webkit-tap-highlight-color: transparent;
 
-  &::before {
-    content: '';
-    position: absolute;
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    height: 15px;
-    background: radial-gradient(ellipse, rgba(139, 119, 101, 0.15) 0%, transparent 70%);
-    filter: blur(6px);
-    z-index: -1;
-  }
-
   &:hover {
-    transform: translate(-50%, -50%) scale(1.02);
+    transform: scale(1.02);
   }
 
   &:active {
-    transform: translate(-50%, -50%) scale(0.98);
+    transform: scale(0.98);
   }
 }
 
@@ -1056,8 +1095,31 @@ onUnmounted(() => {
 
 .letter-body {
   width: 100%;
-  text-align: center;
-  padding: 8px 0;
+  text-align: left;
+  padding: 8px 12px;
+  overflow-y: auto;
+  max-height: 480px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 119, 101, 0.3) transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 3px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: rgba(139, 119, 101, 0.3);
+    border-radius: 3px;
+    transition: background 0.3s ease;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 119, 101, 0.5);
+  }
 
   .letter-text {
     font-size: 0.9rem;
@@ -1074,6 +1136,7 @@ onUnmounted(() => {
     margin-bottom: 0;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
     font-family: 'Georgia', 'Times New Roman', serif;
+    text-indent: 2em;
   }
 
   .letter-signature {
@@ -1084,6 +1147,7 @@ onUnmounted(() => {
     font-style: italic;
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
     font-family: 'Georgia', 'Times New Roman', serif;
+    text-align: right;
   }
 }
 
@@ -1119,7 +1183,7 @@ onUnmounted(() => {
 
 .letter-fly-enter-from {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.85) translateY(20px);
+  transform: scale(0.85);
 }
 
 .letter-fly-leave-active {
@@ -1128,14 +1192,14 @@ onUnmounted(() => {
 
 .letter-fly-leave-to {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.95) translateY(-10px);
+  transform: scale(0.95);
 }
 
 .footer-decoration {
   display: flex;
   align-items: center;
   gap: 20px;
-  margin-top: 30px;
+  margin-top: 20px;
 
   .footer-sticker {
     font-size: 1.8rem;
@@ -1197,7 +1261,13 @@ onUnmounted(() => {
 }
 
 @media (max-width: $breakpoint-sm) {
+  .card-content {
+    padding: 20px 15px;
+  }
+
   .title-section {
+    margin-bottom: 20px;
+
     .card-title {
       font-size: 2rem;
     }
@@ -1212,6 +1282,8 @@ onUnmounted(() => {
   }
 
   .message-section {
+    margin-bottom: 20px;
+
     .main-message {
       font-size: 1.2rem;
     }
@@ -1221,9 +1293,14 @@ onUnmounted(() => {
     }
   }
 
+  .envelope-section {
+    height: 650px;
+    margin: 15px 0;
+  }
+
   .envelope-container {
     width: 240px;
-    height: 150px;
+    height: 160px;
 
     .envelope-left {
       transform: rotateY(-90deg) translateZ(120px);
@@ -1234,13 +1311,8 @@ onUnmounted(() => {
     }
 
     .envelope-bottom {
-      transform: rotateX(90deg) translateZ(75px);
+      transform: rotateX(90deg) translateZ(80px);
     }
-  }
-
-  .letter-3d {
-    width: 220px;
-    height: 400px;
   }
 
   .letter-paper {

@@ -61,7 +61,7 @@
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import gsap from 'gsap'
 import CachedImage from './CachedImage.vue'
-import { getThemeConfig } from '../data/themeConfigs'
+import { loadThemeConfigs, getThemeConfig } from '../utils/configLoader'
 import {
   randomStickerPosition,
   randomTapeStyle,
@@ -123,6 +123,9 @@ const mainTapeStyle = ref({})
 let stickerAnimations = []
 
 const activeStickers = computed(() => {
+  if (!themeConfig.value || !themeConfig.value.decor) {
+    return []
+  }
   const shuffled = shuffleArray(themeConfig.value.decor.stickers || [])
   const count = randomInt(3, 5)
   return shuffled.slice(0, count)
@@ -130,6 +133,10 @@ const activeStickers = computed(() => {
 
 const initializeStyles = () => {
   if (thumbnailImages.value.length === 0) return
+
+  if (!themeConfig.value || !themeConfig.value.decor) {
+    return
+  }
 
   stickerStyles.value = activeStickers.value.map((_, index) =>
     randomStickerPosition(index, activeStickers.value.length)
@@ -278,10 +285,18 @@ const getThumbnailTapeStyle = (index) => {
   }
 }
 
-onMounted(() => {
-  initializeStyles()
-  animateStickers()
-  startAutoPlay()
+onMounted(async () => {
+  try {
+    await loadThemeConfigs()
+    initializeStyles()
+    animateStickers()
+    startAutoPlay()
+  } catch (error) {
+    console.error('Failed to load theme configs:', error)
+    initializeStyles()
+    animateStickers()
+    startAutoPlay()
+  }
 })
 
 watch(thumbnailImages, () => {

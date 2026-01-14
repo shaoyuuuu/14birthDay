@@ -3,6 +3,7 @@ import errorHandler, {
   ApiError,
   BoundaryChecks,
 } from "../utils/errorHandler";
+import { loadThemeConfigs, getThemeConfig, getAllThemes } from "../utils/configLoader";
 
 const MEMORY_FOLDERS = [
   "七七八八",
@@ -193,8 +194,8 @@ export const memoryApi = {
 export const themeApi = {
   async getThemeConfig(themeName) {
     try {
-      const themeData = await import("../data/themeConfigs.js");
-      return themeData.getThemeConfig(themeName);
+      await loadThemeConfigs();
+      return getThemeConfig(themeName);
     } catch (error) {
       errorHandler.handleError(new NetworkError(`获取主题${themeName}配置失败`, error));
       throw error;
@@ -203,8 +204,8 @@ export const themeApi = {
 
   async getAllThemes() {
     try {
-      const themeData = await import("../data/themeConfigs.js");
-      return themeData.getAllThemes();
+      await loadThemeConfigs();
+      return getAllThemes();
     } catch (error) {
       errorHandler.handleError(new NetworkError("获取所有主题配置失败", error));
       throw error;

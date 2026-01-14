@@ -64,7 +64,7 @@ import gsap from 'gsap'
 import ImageViewer from './ImageViewer.vue'
 import ThemeDecorations from './ThemeDecorations.vue'
 import { createCardEnterAnimation } from '../composables/useAnimation'
-import { getThemeConfig } from '../data/themeConfigs'
+import { loadThemeConfigs, getThemeConfig } from '../utils/configLoader'
 import { getThemeShadow, getThemeBackground, getThemeClassName } from '../utils/themeUtils'
 import { randomPaperTexture, randomChoice, randomInt, randomFloat } from '../utils/randomUtils'
 
@@ -444,22 +444,47 @@ const themeClass = computed(() => getThemeClassName(props.theme))
 const paperTextureStyle = ref({})
 
 // 计算卡片内容样式
-const cardContentStyle = computed(() => ({
-  backgroundColor: themeConfig.value.colors.background,
-  backgroundImage: getThemeBackground(themeConfig.value.colors, themeConfig.value.decor)
-}))
+const cardContentStyle = computed(() => {
+  if (!themeConfig.value || !themeConfig.value.colors) {
+    return {
+      backgroundColor: 'rgba(255, 138, 101, 0.15)',
+      backgroundImage: 'none'
+    }
+  }
+  return {
+    backgroundColor: themeConfig.value.colors.background,
+    backgroundImage: getThemeBackground(themeConfig.value.colors, themeConfig.value.decor)
+  }
+})
 
 // 计算记忆内容样式
-const memoryStyle = computed(() => ({
-  borderLeftColor: themeConfig.value.colors.primary,
-  backgroundColor: `${themeConfig.value.colors.background}e6`
-}))
+const memoryStyle = computed(() => {
+  if (!themeConfig.value || !themeConfig.value.colors) {
+    return {
+      borderLeftColor: '#ff8a65',
+      backgroundColor: 'rgba(255, 138, 101, 0.15)'
+    }
+  }
+  return {
+    borderLeftColor: themeConfig.value.colors.primary,
+    backgroundColor: `${themeConfig.value.colors.background}e6`
+  }
+})
 
-onMounted(() => {
-  generateRandomPaperTexture()
+onMounted(async () => {
+  try {
+    await loadThemeConfigs()
+    generateRandomPaperTexture()
+  } catch (error) {
+    console.error('Failed to load theme configs:', error)
+    generateRandomPaperTexture()
+  }
 })
 
 const generateRandomPaperTexture = () => {
+  if (!themeConfig.value || !themeConfig.value.decor) {
+    return
+  }
   const textureConfig = randomPaperTexture(themeConfig.value.decor.paperTexture)
   paperTextureStyle.value = {
     background: textureConfig.background,
