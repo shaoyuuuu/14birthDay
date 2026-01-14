@@ -1,4 +1,4 @@
-import { themeConfigs } from '../data/themeConfigs'
+import themeConfigs from '../../public/config/themeConfigs.json'
 
 const SHADOW_INTENSITY_MAP = {
   soft: '0 8px 16px',
