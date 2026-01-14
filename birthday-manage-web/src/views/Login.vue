@@ -2,26 +2,40 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
+import { User, Lock } from '@element-plus/icons-vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 
+const loginFormRef = ref()
 const username = ref('')
 const password = ref('')
-const showPassword = ref(false)
+const loading = ref(false)
+
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+  ]
+}
 
 async function handleLogin() {
-  if (!username.value || !password.value) {
-    alert('请填写所有字段')
-    return
-  }
+  if (!loginFormRef.value) return
 
-  const success = await authStore.login(username.value, password.value)
-  if (success) {
-    router.push('/')
-  } else {
-    alert(authStore.error || '登录失败')
-  }
+  await loginFormRef.value.validate(async (valid: boolean) => {
+    if (valid) {
+      loading.value = true
+      const success = await authStore.login(username.value, password.value)
+      loading.value = false
+      if (success) {
+        router.push('/')
+      }
+    }
+  })
 }
 </script>
 
@@ -32,44 +46,25 @@ async function handleLogin() {
         <h1>管理员登录</h1>
         <p>Birthday Wish 管理后台</p>
       </div>
-      
-      <form @submit.prevent="handleLogin" class="login-form">
-        <div class="form-group">
-          <label for="username">用户名</label>
-          <input
-            id="username"
-            v-model="username"
-            type="text"
-            placeholder="请输入用户名"
-            required
-          />
-        </div>
-        
-        <div class="form-group">
-          <label for="password">密码</label>
-          <div class="password-input">
-            <input
-              id="password"
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              placeholder="请输入密码"
-              required
-            />
-            <button
-              type="button"
-              class="toggle-password"
-              @click="showPassword = !showPassword"
-            >
-              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
-            </button>
-          </div>
-        </div>
-        
-        <button type="submit" class="login-button" :disabled="authStore.loading">
-          {{ authStore.loading ? '登录中...' : '登录' }}
-        </button>
-      </form>
-      
+
+      <el-form ref="loginFormRef" :model="{ username, password }" :rules="rules" class="login-form"
+        @submit.prevent="handleLogin">
+        <el-form-item prop="username">
+          <el-input v-model="username" placeholder="请输入用户名" size="large" :prefix-icon="User" clearable />
+        </el-form-item>
+
+        <el-form-item prop="password">
+          <el-input v-model="password" type="password" placeholder="请输入密码" size="large" :prefix-icon="Lock"
+            show-password clearable @keyup.enter="handleLogin" />
+        </el-form-item>
+
+        <el-form-item>
+          <el-button type="primary" size="large" :loading="loading" class="login-button" @click="handleLogin">
+            登录
+          </el-button>
+        </el-form-item>
+      </el-form>
+
       <div class="login-footer">
         <p>还没有账号？<router-link to="/register">立即注册</router-link></p>
       </div>
@@ -77,20 +72,24 @@ async function handleLogin() {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../styles/variables.scss' as *;
+@use 'sass:color';
+
 .login-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
 }
 
 .login-card {
-  background: white;
-  border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  padding: 40px;
+  background: $background-white;
+  border-radius: $border-radius-large;
+  box-shadow: $box-shadow-dark;
+  padding: $spacing-xl;
   width: 100%;
   max-width: 420px;
   animation: slideUp 0.5s ease-out;
@@ -101,6 +100,7 @@ async function handleLogin() {
     opacity: 0;
     transform: translateY(30px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -109,139 +109,70 @@ async function handleLogin() {
 
 .login-header {
   text-align: center;
-  margin-bottom: 30px;
-}
+  margin-bottom: $spacing-lg;
 
-.login-header h1 {
-  font-size: 28px;
-  color: #333;
-  margin-bottom: 8px;
-}
+  h1 {
+    font-size: $font-size-extra-large;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-xs;
+  }
 
-.login-header p {
-  font-size: 14px;
-  color: #666;
+  p {
+    font-size: $font-size-base;
+    color: $text-secondary;
+  }
 }
 
 .login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
+  :deep(.el-form-item) {
+    margin-bottom: $spacing-lg;
+  }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
+  :deep(.el-input__wrapper) {
+    border-radius: $border-radius-base;
+    padding: 8px 15px;
+  }
 
-.form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #555;
-}
-
-.form-group input {
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.form-group input:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.password-input {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-
-.password-input input {
-  width: 100%;
-  padding-right: 45px;
-}
-
-.toggle-password {
-  position: absolute;
-  right: 12px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 18px;
-  padding: 4px;
-  transition: transform 0.2s;
-}
-
-.toggle-password:hover {
-  transform: scale(1.1);
-}
-
-.login-button {
-  padding: 14px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 10px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-  margin-top: 10px;
-}
-
-.login-button:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-}
-
-.login-button:active:not(:disabled) {
-  transform: translateY(0);
-}
-
-.login-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  .login-button {
+    width: 100%;
+    height: 44px;
+    font-size: $font-size-medium;
+    font-weight: 500;
+    border-radius: $border-radius-base;
+  }
 }
 
 .login-footer {
   text-align: center;
-  margin-top: 24px;
-  padding-top: 20px;
-  border-top: 1px solid #e0e0e0;
-}
+  margin-top: $spacing-lg;
+  padding-top: $spacing-md;
+  border-top: 1px solid $border-lighter;
 
-.login-footer p {
-  font-size: 14px;
-  color: #666;
-}
+  p {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    margin: 0;
 
-.login-footer a {
-  color: #667eea;
-  text-decoration: none;
-  font-weight: 500;
-}
+    a {
+      color: $primary-color;
+      font-weight: 500;
+      transition: $transition-base;
 
-.login-footer a:hover {
-  text-decoration: underline;
+      &:hover {
+        color: color.scale($primary-color, $lightness: 10%);
+      }
+    }
+  }
 }
 
 @media (max-width: 480px) {
   .login-card {
-    padding: 30px 20px;
+    padding: $spacing-lg;
   }
-  
+
   .login-header h1 {
-    font-size: 24px;
-  }
-  
-  .login-button {
-    padding: 12px;
-    font-size: 15px;
+    font-size: $font-size-large;
   }
 }
 </style>

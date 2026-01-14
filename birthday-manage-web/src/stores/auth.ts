@@ -1,12 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import api from '../utils/api'
-
-interface User {
-  id: number
-  username: string
-  email: string
-}
+import * as api from '../api'
+import type { User } from '../types/api'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
@@ -16,17 +11,40 @@ export const useAuthStore = defineStore('auth', () => {
 
   const isAuthenticated = computed(() => !!token.value)
 
+  const userRole = computed(() => user.value?.role || 'viewer')
+
+  const userPermissions = computed(() => user.value?.permissions || [])
+
+  const isAdmin = computed(() => userRole.value === 'admin')
+
+  const isEditor = computed(() => ['admin', 'editor'].includes(userRole.value))
+
+  function hasPermission(permission: string): boolean {
+    if (isAdmin.value) return true
+    return userPermissions.value.includes(permission)
+  }
+
+  function hasAnyPermission(permissions: string[]): boolean {
+    if (isAdmin.value) return true
+    return permissions.some(p => userPermissions.value.includes(p))
+  }
+
+  function hasAllPermissions(permissions: string[]): boolean {
+    if (isAdmin.value) return true
+    return permissions.every(p => userPermissions.value.includes(p))
+  }
+
   async function login(username: string, password: string) {
     loading.value = true
     error.value = null
     try {
-      const response = await api.post('/auth/login', { username, password })
-      token.value = response.data.token
-      user.value = response.data.user
-      localStorage.setItem('token', response.data.token)
+      const response = await api.auth.login({ username, password })
+      token.value = response.data.data.token
+      user.value = response.data.data.user
+      localStorage.setItem('token', response.data.data.token)
       return true
     } catch (err: any) {
-      error.value = err.response?.data?.error || 'Login failed'
+      error.value = err.response?.data?.message || 'Login failed'
       return false
     } finally {
       loading.value = false
@@ -37,13 +55,13 @@ export const useAuthStore = defineStore('auth', () => {
     loading.value = true
     error.value = null
     try {
-      const response = await api.post('/auth/register', { username, email, password })
-      token.value = response.data.token
-      user.value = response.data.user
-      localStorage.setItem('token', response.data.token)
+      const response = await api.auth.register({ username, email, password })
+      token.value = response.data.data.token
+      user.value = response.data.data.user
+      localStorage.setItem('token', response.data.data.token)
       return true
     } catch (err: any) {
-      error.value = err.response?.data?.error || 'Registration failed'
+      error.value = err.response?.data?.message || 'Registration failed'
       return false
     } finally {
       loading.value = false
@@ -52,10 +70,10 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function verify() {
     if (!token.value) return false
-    
+
     try {
-      const response = await api.get('/auth/verify')
-      user.value = response.data.user
+      const response = await api.auth.verify()
+      user.value = response.data.data.user
       return true
     } catch (err) {
       logout()
@@ -75,9 +93,16 @@ export const useAuthStore = defineStore('auth', () => {
     loading,
     error,
     isAuthenticated,
+    userRole,
+    userPermissions,
+    isAdmin,
+    isEditor,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
     login,
     register,
     verify,
-    logout
+    logout,
   }
 })

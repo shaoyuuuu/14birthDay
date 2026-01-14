@@ -1,110 +1,176 @@
-<script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { useAuthStore } from '../stores/auth'
-import { RouterView } from 'vue-router'
-
-const router = useRouter()
-const route = useRoute()
-const authStore = useAuthStore()
-
-const sidebarOpen = ref(false)
-const activeTab = computed(() => route.name)
-
-const tabs = [
-  { name: 'visits', label: '访问统计', icon: '📊' },
-  { name: 'messages', label: '留言管理', icon: '💬' },
-  { name: 'memories', label: '回忆管理', icon: '📸' }
-]
-
-function toggleSidebar() {
-  sidebarOpen.value = !sidebarOpen.value
-}
-
-function handleLogout() {
-  if (confirm('确定要退出登录吗？')) {
-    authStore.logout()
-    router.push('/login')
-  }
-}
-
-function navigateTo(tabName: string) {
-  router.push({ name: tabName })
-  if (window.innerWidth < 768) {
-    sidebarOpen.value = false
-  }
-}
-</script>
-
 <template>
   <div class="dashboard">
     <div class="dashboard-container">
-      <div class="sidebar-overlay" :class="{ active: sidebarOpen }" @click="sidebarOpen = false"></div>
-      
+      <div class="sidebar-overlay" :class="{ active: sidebarOpen }" @click="toggleSidebar"></div>
+
       <aside class="sidebar" :class="{ active: sidebarOpen }">
         <div class="sidebar-header">
-          <h2>管理后台</h2>
-          <button class="close-sidebar" @click="sidebarOpen = false" v-if="sidebarOpen">
-            ✕
+          <div class="logo">
+            <el-icon :size="32" color="#409eff">
+              <DataLine />
+            </el-icon>
+            <span class="logo-text">生日管理</span>
+          </div>
+          <button class="close-btn" @click="toggleSidebar" v-if="isMobile">
+            <el-icon :size="24">
+              <Close />
+            </el-icon>
           </button>
         </div>
-        
-        <div class="user-info">
-          <div class="user-avatar">
-            👤
-          </div>
-          <div class="user-details">
-            <p class="user-name">{{ authStore.user?.username }}</p>
-            <p class="user-email">{{ authStore.user?.email }}</p>
-          </div>
-        </div>
-        
+
         <nav class="sidebar-nav">
-          <button
-            v-for="tab in tabs"
-            :key="tab.name"
-            class="nav-item"
-            :class="{ active: activeTab === tab.name }"
-            @click="navigateTo(tab.name)"
-          >
-            <span class="nav-icon">{{ tab.icon }}</span>
-            <span class="nav-label">{{ tab.label }}</span>
-          </button>
+          <div v-for="item in menuItems" :key="item.name" class="nav-item" :class="{ active: activeTab === item.name }"
+            @click="navigateTo(item.name)">
+            <component :is="item.icon" class="nav-icon" />
+            <span class="nav-label">{{ item.label }}</span>
+          </div>
         </nav>
-        
+
         <div class="sidebar-footer">
-          <button class="logout-button" @click="handleLogout">
-            <span>🚪</span>
-            <span>退出登录</span>
+          <div class="user-info">
+            <el-icon :size="24">
+              <User />
+            </el-icon>
+            <div class="user-details">
+              <div class="username">{{ authStore.user?.username }}</div>
+              <div class="user-role">{{ userRoleLabel }}</div>
+            </div>
+          </div>
+          <button class="logout-btn" @click="handleLogout">
+            <el-icon>
+              <SwitchButton />
+            </el-icon>
+            <span>退出</span>
           </button>
         </div>
       </aside>
-      
+
       <main class="main-content">
         <header class="main-header">
-          <button class="menu-toggle" @click="toggleSidebar">
-            ☰
+          <button class="menu-btn" @click="toggleSidebar" v-if="isMobile">
+            <el-icon :size="24">
+              <Menu />
+            </el-icon>
           </button>
-          <h1 class="page-title">{{ tabs.find(t => t.name === activeTab)?.label }}</h1>
+          <h1 class="page-title">{{ currentPageTitle }}</h1>
+          <div class="header-actions">
+            <el-button circle @click="router.push('/profile')" v-if="authStore.hasPermission('profile:view')">
+              <el-icon>
+                <User />
+              </el-icon>
+            </el-button>
+          </div>
         </header>
-        
-        <div class="content-area">
-          <RouterView />
+
+        <div class="content-wrapper">
+          <router-view v-slot="{ Component }">
+            <transition name="fade" mode="out-in">
+              <component :is="Component" />
+            </transition>
+          </router-view>
         </div>
       </main>
     </div>
   </div>
 </template>
 
-<style scoped>
+<script setup lang="ts">
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '../stores/auth'
+import { ElMessageBox } from 'element-plus'
+import { Menu, Close, User, Message, DataLine, Document, SwitchButton } from '@element-plus/icons-vue'
+
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
+
+const sidebarOpen = ref(false)
+const isMobile = ref(false)
+
+const activeTab = computed(() => route.name as string)
+
+const userRoleLabel = computed(() => {
+  if (authStore.isAdmin) return '管理员'
+  if (authStore.isEditor) return '编辑者'
+  return '访客'
+})
+
+const currentPageTitle = computed(() => {
+  const titles: Record<string, string> = {
+    dashboard: '仪表板',
+    visits: '访问统计',
+    messages: '留言管理',
+    memories: '回忆管理',
+    profile: '个人信息'
+  }
+  return titles[activeTab.value] || '仪表板'
+})
+
+const menuItems = computed(() => {
+  const items = [
+    { name: 'visits', label: '访问统计', icon: DataLine, permission: 'visits:view' },
+    { name: 'messages', label: '留言管理', icon: Message, permission: 'messages:view' },
+    { name: 'memories', label: '回忆管理', icon: Document, permission: 'memories:view' }
+  ]
+
+  if (authStore.hasPermission('profile:view')) {
+    items.push({ name: 'profile', label: '个人信息', icon: User, permission: 'profile:view' })
+  }
+
+  return items.filter(item => !item.permission || authStore.hasPermission(item.permission))
+})
+
+function checkMobile() {
+  isMobile.value = window.innerWidth < 768
+}
+
+function toggleSidebar() {
+  sidebarOpen.value = !sidebarOpen.value
+}
+
+async function handleLogout() {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    authStore.logout()
+    router.push('/login')
+  } catch {
+  }
+}
+
+function navigateTo(tabName: string) {
+  router.push({ name: tabName })
+  if (isMobile.value) {
+    sidebarOpen.value = false
+  }
+}
+
+onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
+})
+</script>
+
+<style scoped lang="scss">
+@use '../styles/variables.scss' as *;
+
 .dashboard {
   min-height: 100vh;
-  background: #f5f7fa;
+  background: $background-base;
 }
 
 .dashboard-container {
   display: flex;
   min-height: 100vh;
+  position: relative;
 }
 
 .sidebar-overlay {
@@ -118,235 +184,316 @@ function navigateTo(tabName: string) {
   opacity: 0;
   visibility: hidden;
   transition: all 0.3s;
-}
 
-.sidebar-overlay.active {
-  opacity: 1;
-  visibility: visible;
+  &.active {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  @media (min-width: $breakpoint-sm) {
+    display: none;
+  }
 }
 
 .sidebar {
-  width: 280px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
+  width: $mobile-sidebar-width;
+  background: $background-white;
   display: flex;
   flex-direction: column;
   position: fixed;
   height: 100vh;
   z-index: 999;
   transition: transform 0.3s ease;
+  transform: translateX(-100%);
+  box-shadow: $box-shadow-dark;
+
+  @media (min-width: $breakpoint-sm) {
+    width: 280px;
+    position: fixed;
+    transform: translateX(0);
+    box-shadow: none;
+    border-right: 1px solid $border-light;
+  }
+
+  &.active {
+    transform: translateX(0);
+  }
 }
 
 .sidebar-header {
-  padding: 24px;
-  border-bottom: 1px solid #e0e0e0;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg;
+  border-bottom: 1px solid $border-light;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+  }
 }
 
-.sidebar-header h2 {
-  font-size: 20px;
-  color: #333;
-  margin: 0;
+.logo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $mobile-spacing-sm;
+  }
+
+  .logo-text {
+    font-size: $font-size-large;
+    font-weight: 600;
+    color: $text-primary;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-large;
+    }
+  }
 }
 
-.close-sidebar {
+.close-btn {
   background: none;
   border: none;
-  font-size: 24px;
   cursor: pointer;
-  padding: 4px;
-  color: #666;
-}
-
-.user-info {
-  padding: 24px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.user-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: $text-secondary;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-}
+  padding: $spacing-xs;
+  border-radius: $border-radius-base;
+  transition: all 0.3s;
 
-.user-details {
-  flex: 1;
-}
+  &:hover {
+    background: $background-base;
+    color: $text-primary;
+  }
 
-.user-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #333;
-  margin: 0 0 4px 0;
-}
-
-.user-email {
-  font-size: 14px;
-  color: #666;
-  margin: 0;
+  @media (min-width: $breakpoint-sm) {
+    display: none;
+  }
 }
 
 .sidebar-nav {
   flex: 1;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  padding: $spacing-md;
+  overflow-y: auto;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-sm;
+  }
 }
 
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  border: none;
-  background: none;
-  border-radius: 10px;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  border-radius: $border-radius-base;
   cursor: pointer;
   transition: all 0.3s;
-  color: #666;
-  font-size: 15px;
-  text-align: left;
-}
+  color: $text-secondary;
+  margin-bottom: $spacing-xs;
 
-.nav-item:hover {
-  background: #f5f7fa;
-  color: #667eea;
-}
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+    gap: $mobile-spacing-md;
+    margin-bottom: $mobile-spacing-xs;
+    border-radius: $mobile-border-radius-base;
+  }
 
-.nav-item.active {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  &:hover {
+    background: $background-base;
+    color: $primary-color;
+  }
+
+  &.active {
+    background: rgba(64, 158, 255, 0.1);
+    color: $primary-color;
+    font-weight: 500;
+  }
 }
 
 .nav-icon {
-  font-size: 20px;
+  font-size: $font-size-medium;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-medium;
+  }
 }
 
 .nav-label {
-  font-weight: 500;
+  font-size: $font-size-base;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-base;
+  }
 }
 
 .sidebar-footer {
-  padding: 16px;
-  border-top: 1px solid #e0e0e0;
+  padding: $spacing-md;
+  border-top: 1px solid $border-light;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+  }
 }
 
-.logout-button {
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $mobile-spacing-md;
+    margin-bottom: $mobile-spacing-md;
+  }
+}
+
+.user-details {
+  flex: 1;
+  overflow: hidden;
+
+  .username {
+    font-size: $font-size-base;
+    font-weight: 500;
+    color: $text-primary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-base;
+    }
+  }
+
+  .user-role {
+    font-size: $font-size-small;
+    color: $text-secondary;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-small;
+    }
+  }
+}
+
+.logout-btn {
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 12px;
-  border: 2px solid #e0e0e0;
-  background: white;
-  border-radius: 10px;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: $background-base;
+  border: 1px solid $border-base;
+  border-radius: $border-radius-base;
   cursor: pointer;
   transition: all 0.3s;
-  color: #666;
-  font-size: 15px;
-}
+  color: $text-secondary;
 
-.logout-button:hover {
-  border-color: #ff4757;
-  color: #ff4757;
-  background: #fff5f5;
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+    gap: $mobile-spacing-sm;
+    border-radius: $mobile-border-radius-base;
+  }
+
+  &:hover {
+    background: $danger-color;
+    border-color: $danger-color;
+    color: $background-white;
+  }
 }
 
 .main-content {
   flex: 1;
-  margin-left: 280px;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  margin-left: 0;
+  padding-bottom: $mobile-nav-height;
+
+  @media (min-width: $breakpoint-sm) {
+    margin-left: 280px;
+    padding-bottom: 0;
+  }
 }
 
 .main-header {
-  background: white;
-  padding: 20px 32px;
-  border-bottom: 1px solid #e0e0e0;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: $spacing-md;
+  padding: $spacing-lg $spacing-xl;
+  background: $background-white;
+  border-bottom: 1px solid $border-light;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md $mobile-spacing-lg;
+    gap: $mobile-spacing-md;
+  }
 }
 
-.menu-toggle {
-  display: none;
+.menu-btn {
   background: none;
   border: none;
-  font-size: 24px;
   cursor: pointer;
-  padding: 4px;
-  color: #666;
+  color: $text-secondary;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xs;
+  border-radius: $border-radius-base;
+  transition: all 0.3s;
+
+  &:hover {
+    background: $background-base;
+    color: $text-primary;
+  }
+
+  @media (min-width: $breakpoint-sm) {
+    display: none;
+  }
 }
 
 .page-title {
-  font-size: 24px;
-  color: #333;
-  margin: 0;
-}
-
-.content-area {
   flex: 1;
-  padding: 32px;
-}
+  font-size: $font-size-large;
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
 
-@media (max-width: 768px) {
-  .sidebar {
-    transform: translateX(-100%);
-  }
-  
-  .sidebar.active {
-    transform: translateX(0);
-  }
-  
-  .main-content {
-    margin-left: 0;
-  }
-  
-  .menu-toggle {
-    display: block;
-  }
-  
-  .content-area {
-    padding: 20px 16px;
-  }
-  
-  .main-header {
-    padding: 16px;
-  }
-  
-  .page-title {
-    font-size: 20px;
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-large;
   }
 }
 
-@media (max-width: 480px) {
-  .sidebar {
-    width: 100%;
+.header-actions {
+  display: flex;
+  gap: $spacing-sm;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $mobile-spacing-sm;
   }
-  
-  .sidebar-header h2 {
-    font-size: 18px;
+}
+
+.content-wrapper {
+  flex: 1;
+  padding: $spacing-xl;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
   }
-  
-  .page-title {
-    font-size: 18px;
-  }
-  
-  .content-area {
-    padding: 16px 12px;
-  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 </style>

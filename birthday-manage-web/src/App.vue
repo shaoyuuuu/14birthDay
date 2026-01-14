@@ -1,9 +1,15 @@
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
 import { useAuthStore } from './stores/auth'
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
+import MobileNav from './components/MobileNav.vue'
 
 const authStore = useAuthStore()
+const route = useRoute()
+
+const isAuthPage = computed(() => {
+  return ['/login', '/register'].includes(route.path)
+})
 
 onMounted(() => {
   authStore.verify()
@@ -13,6 +19,7 @@ onMounted(() => {
 <template>
   <div id="app">
     <RouterView />
+    <MobileNav v-if="!isAuthPage && authStore.isAuthenticated" />
   </div>
 </template>
 

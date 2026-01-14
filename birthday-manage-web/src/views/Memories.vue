@@ -1,35 +1,191 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import api from '../utils/api'
+<template>
+  <div class="memories-page">
+    <div class="memories-header">
+      <h2 class="page-title">回忆管理</h2>
+      <div class="header-actions">
+        <el-input v-model="searchQuery" placeholder="搜索回忆" :prefix-icon="Search" clearable class="search-input" />
+        <el-button type="primary" :icon="Plus" @click="openCreateDialog"
+          v-if="authStore.hasPermission('memories:create')">
+          添加回忆
+        </el-button>
+      </div>
+    </div>
 
-interface Memory {
-  id: number
-  title: string
-  description: string
-  image_url: string
-  created_at: string
-}
+    <div class="memories-content">
+      <div v-if="!canViewMemories" class="empty-container">
+        <el-icon :size="60" color="#c0c4cc">
+          <Lock />
+        </el-icon>
+        <p>您没有权限访问此页面</p>
+        <p class="permission-hint">需要权限: memories:view</p>
+      </div>
+
+      <div v-else-if="loading" class="loading-container">
+        <el-icon class="is-loading" :size="40">
+          <Loading />
+        </el-icon>
+        <p>加载中...</p>
+      </div>
+
+      <div v-else-if="error" class="error-container">
+        <el-icon :size="40" color="#f56c6c">
+          <Warning />
+        </el-icon>
+        <p>{{ error }}</p>
+        <el-button @click="fetchMemories">重新加载</el-button>
+      </div>
+
+      <div v-else-if="filteredMemories.length === 0" class="empty-container">
+        <el-icon :size="60" color="#c0c4cc">
+          <Document />
+        </el-icon>
+        <p>暂无回忆</p>
+      </div>
+
+      <div v-else class="memories-grid">
+        <div v-for="memory in filteredMemories" :key="memory.id" class="memory-card" @click="viewMemory(memory)">
+          <div class="memory-image" v-if="memory.image_url">
+            <img :src="memory.image_url" :alt="memory.title" />
+          </div>
+          <div class="memory-content">
+            <h3 class="memory-title">{{ memory.title }}</h3>
+            <p class="memory-date">{{ formatDate(memory.date) }}</p>
+            <p class="memory-description">{{ memory.description }}</p>
+          </div>
+          <div class="memory-actions">
+            <el-button type="primary" size="small" text @click.stop="editMemory(memory)"
+              v-if="authStore.hasPermission('memories:edit')">
+              编辑
+            </el-button>
+            <el-button type="danger" size="small" text @click.stop="confirmDelete(memory.id)"
+              v-if="authStore.hasPermission('memories:delete')">
+              删除
+            </el-button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <el-dialog v-model="showFormDialog" :title="isEditing ? '编辑回忆' : '添加回忆'" :width="dialogWidth"
+      :close-on-click-modal="false">
+      <el-form :model="memoryForm" label-width="80px" class="memory-form">
+        <el-form-item label="标题">
+          <el-input v-model="memoryForm.title" placeholder="请输入标题" />
+        </el-form-item>
+        <el-form-item label="日期">
+          <el-date-picker v-model="memoryForm.date" type="date" placeholder="选择日期" style="width: 100%" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="memoryForm.description" type="textarea" :rows="4" placeholder="请输入描述" />
+        </el-form-item>
+        <el-form-item label="图片">
+          <el-upload class="image-uploader" :show-file-list="false" :on-success="handleImageSuccess"
+            :before-upload="beforeImageUpload" action="/api/memories/upload">
+            <img v-if="memoryForm.image_url" :src="memoryForm.image_url" class="uploaded-image" />
+            <el-icon v-else class="uploader-icon">
+              <Plus />
+            </el-icon>
+          </el-upload>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="closeFormDialog">取消</el-button>
+        <el-button type="primary" @click="saveMemory" :loading="saving">
+          保存
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showDetailDialog" title="回忆详情" :width="dialogWidth" :close-on-click-modal="false">
+      <div v-if="selectedMemory" class="memory-detail">
+        <div class="detail-image" v-if="selectedMemory.image_url">
+          <img :src="selectedMemory.image_url" :alt="selectedMemory.title" />
+        </div>
+        <h2 class="detail-title">{{ selectedMemory.title }}</h2>
+        <p class="detail-date">{{ formatDate(selectedMemory.date) }}</p>
+        <div class="detail-description">
+          <p>{{ selectedMemory.description }}</p>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="closeDetailDialog">关闭</el-button>
+        <el-button type="primary" @click="editMemory(selectedMemory)" v-if="authStore.hasPermission('memories:edit')">
+          编辑
+        </el-button>
+        <el-button type="danger" @click="confirmDelete(selectedMemory?.id)"
+          v-if="authStore.hasPermission('memories:delete')">
+          删除
+        </el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="showDeleteDialog" title="确认删除" :width="dialogWidth" :close-on-click-modal="false">
+      <p>确定要删除这条回忆吗？此操作无法撤销。</p>
+      <template #footer>
+        <el-button @click="showDeleteDialog = false">取消</el-button>
+        <el-button type="danger" @click="deleteMemory">删除</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import { Search, Loading, Warning, Document, Plus, Lock } from '@element-plus/icons-vue'
+import * as api from '../api'
+import type { Memory } from '../types/api'
+import { useAuthStore } from '../stores/auth'
+
+const authStore = useAuthStore()
+
+const canViewMemories = computed(() => authStore.hasPermission('memories:view'))
 
 const memories = ref<Memory[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const showFormModal = ref(false)
-const showDeleteModal = ref(false)
+const selectedMemory = ref<Memory | null>(null)
+const showFormDialog = ref(false)
+const showDetailDialog = ref(false)
+const showDeleteDialog = ref(false)
 const memoryToDelete = ref<number | null>(null)
-const editingMemory = ref<Memory | null>(null)
+const searchQuery = ref('')
+const isEditing = ref(false)
+const saving = ref(false)
 
-const formData = ref({
+const memoryForm = ref({
+  id: 0,
   title: '',
   description: '',
+  date: '',
   image_url: ''
 })
 
+const filteredMemories = computed(() => {
+  if (!searchQuery.value) return memories.value
+  const query = searchQuery.value.toLowerCase()
+  return memories.value.filter(
+    memory =>
+      memory.title.toLowerCase().includes(query) ||
+      memory.description.toLowerCase().includes(query)
+  )
+})
+
+const dialogWidth = computed(() => {
+  return window.innerWidth < 768 ? '90%' : '600px'
+})
+
 async function fetchMemories() {
+  loading.value = true
+  error.value = null
   try {
-    const response = await api.get('/memories')
-    memories.value = response.data.memories
+    const response = await api.memories.getMemories()
+    memories.value = response.data.data.memories
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to fetch memories'
+    error.value = err.response?.data?.message || '获取回忆失败'
+    ElMessage.error(error.value || '获取回忆失败')
+  } finally {
+    loading.value = false
   }
 }
 
@@ -37,558 +193,470 @@ function formatDate(dateString: string) {
   return new Date(dateString).toLocaleDateString('zh-CN')
 }
 
-function openAddForm() {
-  editingMemory.value = null
-  formData.value = { title: '', description: '', image_url: '' }
-  showFormModal.value = true
+function viewMemory(memory: Memory) {
+  selectedMemory.value = memory
+  showDetailDialog.value = true
 }
 
-function openEditForm(memory: Memory) {
-  editingMemory.value = memory
-  formData.value = {
+function closeDetailDialog() {
+  showDetailDialog.value = false
+  selectedMemory.value = null
+}
+
+function openCreateDialog() {
+  isEditing.value = false
+  memoryForm.value = {
+    id: 0,
+    title: '',
+    description: '',
+    date: String(new Date().toISOString().split('T')[0]),
+    image_url: ''
+  }
+  showFormDialog.value = true
+}
+
+function editMemory(memory: Memory | null) {
+  if (!memory) return
+  isEditing.value = true
+  memoryForm.value = {
+    id: memory.id,
     title: memory.title,
     description: memory.description,
-    image_url: memory.image_url
+    date: memory.date,
+    image_url: memory.image_url || ''
   }
-  showFormModal.value = true
+  if (showDetailDialog.value) {
+    showDetailDialog.value = false
+  }
+  showFormDialog.value = true
 }
 
-function closeForm() {
-  showFormModal.value = false
-  editingMemory.value = null
-  formData.value = { title: '', description: '', image_url: '' }
+function closeFormDialog() {
+  showFormDialog.value = false
+  memoryForm.value = {
+    id: 0,
+    title: '',
+    description: '',
+    date: '',
+    image_url: ''
+  }
 }
 
-async function handleSubmit() {
-  if (!formData.value.title || !formData.value.description || !formData.value.image_url) {
-    alert('请填写所有字段')
+async function saveMemory() {
+  if (!memoryForm.value.title || !memoryForm.value.date) {
+    ElMessage.warning('请填写完整信息')
     return
   }
 
+  saving.value = true
   try {
-    if (editingMemory.value) {
-      await api.put(`/memories/${editingMemory.value.id}`, formData.value)
+    if (isEditing.value) {
+      await api.memories.updateMemory(memoryForm.value.id, {
+        title: memoryForm.value.title,
+        description: memoryForm.value.description,
+        date: memoryForm.value.date,
+        image_url: memoryForm.value.image_url
+      })
+      ElMessage.success('更新成功')
+      const index = memories.value.findIndex(m => m.id === memoryForm.value.id)
+      if (index !== -1 && memories.value[index]) {
+        memories.value[index] = {
+          ...memoryForm.value,
+          created_at: memories.value[index].created_at,
+          updated_at: new Date().toISOString()
+        }
+      }
     } else {
-      await api.post('/memories', formData.value)
+      const response = await api.memories.createMemory({
+        title: memoryForm.value.title,
+        description: memoryForm.value.description,
+        date: memoryForm.value.date,
+        image_url: memoryForm.value.image_url
+      })
+      ElMessage.success('创建成功')
+      memories.value.unshift(response.data.data.memory)
     }
-    await fetchMemories()
-    closeForm()
+    closeFormDialog()
   } catch (err: any) {
-    alert(err.response?.data?.error || 'Failed to save memory')
+    ElMessage.error(err.response?.data?.message || '保存失败')
+  } finally {
+    saving.value = false
   }
 }
 
-function confirmDelete(memoryId: number) {
-  memoryToDelete.value = memoryId
-  showDeleteModal.value = true
+function confirmDelete(memoryId?: number) {
+  memoryToDelete.value = memoryId || null
+  showDeleteDialog.value = true
+  if (showDetailDialog.value) {
+    showDetailDialog.value = false
+  }
 }
 
 async function deleteMemory() {
   if (!memoryToDelete.value) return
-  
+
   try {
-    await api.delete(`/memories/${memoryToDelete.value}`)
+    await api.memories.deleteMemory(memoryToDelete.value)
+    ElMessage.success('删除成功')
     memories.value = memories.value.filter(m => m.id !== memoryToDelete.value)
-    showDeleteModal.value = false
+    showDeleteDialog.value = false
     memoryToDelete.value = null
   } catch (err: any) {
-    alert(err.response?.data?.error || 'Failed to delete memory')
+    ElMessage.error(err.response?.data?.message || '删除失败')
   }
 }
 
-onMounted(async () => {
-  loading.value = true
-  await fetchMemories()
-  loading.value = false
+function beforeImageUpload(file: File) {
+  const isImage = file.type.startsWith('image/')
+  const isLt2M = file.size / 1024 / 1024 < 2
+
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件!')
+    return false
+  }
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB!')
+    return false
+  }
+  return true
+}
+
+function handleImageSuccess(response: any) {
+  memoryForm.value.image_url = response.url
+  ElMessage.success('图片上传成功')
+}
+
+onMounted(() => {
+  fetchMemories()
 })
 </script>
 
-<template>
-  <div class="memories-page">
-    <div v-if="loading" class="loading">加载中...</div>
-    
-    <div v-else-if="error" class="error">{{ error }}</div>
-    
-    <div v-else class="memories-content">
-      <div class="memories-header">
-        <h3>共 {{ memories.length }} 个回忆</h3>
-        <button class="add-button" @click="openAddForm">
-          ➕ 添加回忆
-        </button>
-      </div>
-      
-      <div v-if="memories.length === 0" class="empty-state">
-        <div class="empty-icon">📸</div>
-        <h3>暂无回忆</h3>
-        <p>点击"添加回忆"按钮开始记录美好时光</p>
-      </div>
-      
-      <div v-else class="memories-grid">
-        <div
-          v-for="memory in memories"
-          :key="memory.id"
-          class="memory-card"
-        >
-          <div class="memory-image">
-            <img :src="memory.image_url" :alt="memory.title" />
-          </div>
-          
-          <div class="memory-info">
-            <h4 class="memory-title">{{ memory.title }}</h4>
-            <p class="memory-description">{{ memory.description }}</p>
-            <p class="memory-date">{{ formatDate(memory.created_at) }}</p>
-          </div>
-          
-          <div class="memory-actions">
-            <button class="action-button edit" @click="openEditForm(memory)">
-              ✏️ 编辑
-            </button>
-            <button class="action-button delete" @click="confirmDelete(memory.id)">
-              🗑️ 删除
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <div v-if="showFormModal" class="modal-overlay" @click="closeForm">
-      <div class="modal" @click.stop>
-        <div class="modal-header">
-          <h3>{{ editingMemory ? '编辑回忆' : '添加回忆' }}</h3>
-          <button class="close-button" @click="closeForm">✕</button>
-        </div>
-        
-        <div class="modal-body">
-          <form @submit.prevent="handleSubmit" class="memory-form">
-            <div class="form-group">
-              <label for="title">标题</label>
-              <input
-                id="title"
-                v-model="formData.title"
-                type="text"
-                placeholder="请输入标题"
-                required
-              />
-            </div>
-            
-            <div class="form-group">
-              <label for="description">描述</label>
-              <textarea
-                id="description"
-                v-model="formData.description"
-                placeholder="请输入描述"
-                rows="4"
-                required
-              ></textarea>
-            </div>
-            
-            <div class="form-group">
-              <label for="image_url">图片链接</label>
-              <input
-                id="image_url"
-                v-model="formData.image_url"
-                type="url"
-                placeholder="请输入图片链接"
-                required
-              />
-            </div>
-          </form>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="cancel-button" @click="closeForm">取消</button>
-          <button class="confirm-button" @click="handleSubmit">
-            {{ editingMemory ? '保存' : '添加' }}
-          </button>
-        </div>
-      </div>
-    </div>
-    
-    <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
-      <div class="modal modal-small" @click.stop>
-        <div class="modal-header">
-          <h3>确认删除</h3>
-          <button class="close-button" @click="showDeleteModal = false">✕</button>
-        </div>
-        
-        <div class="modal-body">
-          <p>确定要删除这个回忆吗？此操作无法撤销。</p>
-        </div>
-        
-        <div class="modal-footer">
-          <button class="cancel-button" @click="showDeleteModal = false">取消</button>
-          <button class="confirm-button" @click="deleteMemory">删除</button>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
+<style scoped lang="scss">
+@use '../styles/variables.scss' as *;
 
-<style scoped>
 .memories-page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
-}
+  padding: $spacing-lg;
+  padding-bottom: calc($spacing-lg + $mobile-nav-height);
 
-.loading, .error {
-  text-align: center;
-  padding: 60px 20px;
-  font-size: 18px;
-  color: #666;
-}
-
-.error {
-  color: #ff4757;
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+    padding-bottom: calc($mobile-spacing-lg + $mobile-nav-height);
+  }
 }
 
 .memories-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-sm) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $mobile-spacing-md;
+    margin-bottom: $mobile-spacing-lg;
+  }
 }
 
-.memories-header h3 {
-  font-size: 18px;
-  color: #333;
+.page-title {
+  font-size: $font-size-large;
+  font-weight: 600;
+  color: $text-primary;
   margin: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-large;
+  }
 }
 
-.add-button {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
+.header-actions {
+  display: flex;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+    flex-direction: column;
+  }
 }
 
-.add-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.search-input {
+  width: 300px;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 100%;
+  }
 }
 
-.empty-state {
-  text-align: center;
-  padding: 80px 20px;
+.memories-content {
+  min-height: 400px;
 }
 
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-}
+.loading-container,
+.error-container,
+.empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+  color: $text-secondary;
 
-.empty-state h3 {
-  font-size: 24px;
-  color: #333;
-  margin: 0 0 12px 0;
-}
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-lg;
+  }
 
-.empty-state p {
-  font-size: 16px;
-  color: #666;
-  margin: 0;
+  p {
+    margin: $spacing-md 0;
+    font-size: $font-size-base;
+
+    @media (max-width: $breakpoint-sm) {
+      margin: $mobile-spacing-md 0;
+      font-size: $mobile-font-size-base;
+    }
+  }
+
+  .permission-hint {
+    font-size: $font-size-small;
+    color: $text-placeholder;
+    margin-top: $spacing-xs;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-small;
+      margin-top: $mobile-spacing-xs;
+    }
+  }
 }
 
 .memories-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: $spacing-lg;
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+    gap: $mobile-spacing-md;
+  }
 }
 
 .memory-card {
-  background: white;
-  border-radius: 16px;
+  background: $background-white;
+  border-radius: $border-radius-base;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
   transition: all 0.3s;
-}
+  border: 1px solid $border-lighter;
+  display: flex;
+  flex-direction: column;
 
-.memory-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  @media (max-width: $breakpoint-sm) {
+    border-radius: $mobile-border-radius-base;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $box-shadow-base;
+    border-color: $border-light;
+  }
+
+  &:active {
+    transform: translateY(-2px);
+  }
 }
 
 .memory-image {
   width: 100%;
   height: 200px;
   overflow: hidden;
-  background: #f5f7fa;
+  background: $background-base;
+
+  @media (max-width: $breakpoint-sm) {
+    height: 180px;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+
+    .memory-card:hover & {
+      transform: scale(1.05);
+    }
+  }
 }
 
-.memory-image img {
+.memory-content {
+  padding: $spacing-lg;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+  }
+}
+
+.memory-title {
+  font-size: $font-size-medium;
+  color: $text-primary;
+  margin: 0 0 $spacing-xs 0;
+  font-weight: 600;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-medium;
+    margin: 0 0 $mobile-spacing-xs 0;
+  }
+}
+
+.memory-date {
+  font-size: $font-size-small;
+  color: $text-secondary;
+  margin: 0 0 $spacing-sm 0;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-small;
+    margin: 0 0 $mobile-spacing-sm 0;
+  }
+}
+
+.memory-description {
+  font-size: $font-size-base;
+  color: $text-regular;
+  line-height: 1.6;
+  margin: 0 0 $spacing-md 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: $mobile-font-size-base;
+    margin: 0 0 $mobile-spacing-md 0;
+    -webkit-line-clamp: 2;
+  }
+}
+
+.memory-actions {
+  display: flex;
+  gap: $spacing-sm;
+  padding-top: $spacing-sm;
+  border-top: 1px solid $border-lighter;
+
+  @media (max-width: $breakpoint-sm) {
+    padding-top: $mobile-spacing-sm;
+  }
+}
+
+.memory-form {
+  :deep(.el-form-item__label) {
+    font-weight: 500;
+  }
+}
+
+.image-uploader {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed $border-light;
+  border-radius: $border-radius-base;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+
+  &:hover {
+    border-color: $primary-color;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    height: 180px;
+    border-radius: $mobile-border-radius-base;
+  }
+}
+
+.uploaded-image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.memory-info {
-  padding: 20px;
-}
+.uploader-icon {
+  font-size: 48px;
+  color: $text-placeholder;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 
-.memory-title {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 8px 0;
-}
-
-.memory-description {
-  font-size: 14px;
-  color: #666;
-  line-height: 1.6;
-  margin: 0 0 12px 0;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.memory-date {
-  font-size: 12px;
-  color: #999;
-  margin: 0;
-}
-
-.memory-actions {
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
-  display: flex;
-  gap: 12px;
-}
-
-.action-button {
-  flex: 1;
-  padding: 8px 16px;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.action-button.edit {
-  background: #f5f7fa;
-  color: #666;
-}
-
-.action-button.edit:hover {
-  background: #e0e0e0;
-}
-
-.action-button.delete {
-  background: #fff5f5;
-  color: #ff4757;
-}
-
-.action-button.delete:hover {
-  background: #ffe0e0;
-}
-
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  max-width: 600px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  @media (max-width: $breakpoint-sm) {
+    font-size: 40px;
   }
 }
 
-.modal-small {
-  max-width: 400px;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.modal-header h3 {
-  font-size: 18px;
-  color: #333;
-  margin: 0;
-}
-
-.close-button {
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 4px;
-  color: #666;
-  transition: color 0.2s;
-}
-
-.close-button:hover {
-  color: #333;
-}
-
-.modal-body {
-  padding: 24px;
-  overflow-y: auto;
-}
-
-.memory-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-group label {
-  font-size: 14px;
-  font-weight: 500;
-  color: #555;
-}
-
-.form-group input,
-.form-group textarea {
-  padding: 12px 16px;
-  border: 2px solid #e0e0e0;
-  border-radius: 10px;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.form-group input:focus,
-.form-group textarea:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.form-group textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-.modal-footer {
-  padding: 20px 24px;
-  border-top: 1px solid #e0e0e0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-}
-
-.cancel-button {
-  padding: 10px 20px;
-  background: #f5f7fa;
-  color: #666;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.cancel-button:hover {
-  background: #e0e0e0;
-}
-
-.confirm-button {
-  padding: 10px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s;
-}
-
-.confirm-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-@media (max-width: 768px) {
-  .memories-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .memories-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  
-  .add-button {
+.memory-detail {
+  .detail-image {
     width: 100%;
-  }
-  
-  .modal {
-    margin: 20px;
-    max-height: calc(100vh - 40px);
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 16px;
-  }
-}
+    height: 300px;
+    overflow: hidden;
+    border-radius: $border-radius-base;
+    margin-bottom: $spacing-lg;
 
-@media (max-width: 480px) {
-  .memory-card {
-    border-radius: 12px;
+    @media (max-width: $breakpoint-sm) {
+      height: 200px;
+      border-radius: $mobile-border-radius-base;
+      margin-bottom: $mobile-spacing-lg;
+    }
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   }
-  
-  .memory-info {
-    padding: 16px;
+
+  .detail-title {
+    font-size: $font-size-extra-large;
+    color: $text-primary;
+    margin: 0 0 $spacing-sm 0;
+    font-weight: 600;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-extra-large;
+      margin: 0 0 $mobile-spacing-sm 0;
+    }
   }
-  
-  .memory-title {
-    font-size: 16px;
+
+  .detail-date {
+    font-size: $font-size-base;
+    color: $text-secondary;
+    margin: 0 0 $spacing-lg 0;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-base;
+      margin: 0 0 $mobile-spacing-lg 0;
+    }
   }
-  
-  .memory-description {
-    font-size: 13px;
-  }
-  
-  .memory-actions {
-    padding: 12px 16px;
-  }
-  
-  .action-button {
-    padding: 10px;
-    font-size: 12px;
+
+  .detail-description {
+    font-size: $font-size-base;
+    color: $text-primary;
+    line-height: 1.8;
+    padding: $spacing-lg;
+    background: $background-base;
+    border-radius: $border-radius-base;
+    white-space: pre-wrap;
+    word-break: break-word;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-base;
+      padding: $mobile-spacing-md;
+      border-radius: $mobile-border-radius-base;
+    }
   }
 }
 </style>

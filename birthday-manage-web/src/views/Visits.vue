@@ -1,51 +1,50 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
-import api from '../utils/api'
+import { ref, computed, onMounted, nextTick } from 'vue'
+import { DataLine, TrendCharts, User, Loading, Lock } from '@element-plus/icons-vue'
+import * as echarts from 'echarts'
+import * as api from '../api'
+import { useAuthStore } from '../stores/auth'
+import type { Visit, VisitStats, DailyStat, TopPage } from '../types/api'
 
-interface Visit {
-  id: number
-  ip_address: string
-  user_agent: string
-  visit_date: string
-  page_url: string
-  referrer: string
-}
-
-interface Stats {
-  total: number
-  recent: number
-  unique: number
-}
-
-interface DailyStat {
-  date: string
-  count: number
-}
+const authStore = useAuthStore()
 
 const visits = ref<Visit[]>([])
-const stats = ref<Stats>({ total: 0, recent: 0, unique: 0 })
+const stats = ref<VisitStats>({ total: 0, recent: 0, unique: 0 })
 const dailyStats = ref<DailyStat[]>([])
-const topPages = ref<any[]>([])
+const topPages = ref<TopPage[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
 
+const canViewVisits = computed(() => authStore.hasPermission('visits:view'))
+
+const statCards = computed(() => [
+  { label: '总访问量', value: stats.value.total },
+  { label: '最近30天', value: stats.value.recent },
+  { label: '独立访客', value: stats.value.unique }
+])
+
+const visitChartRef = ref<HTMLElement>()
+const pageChartRef = ref<HTMLElement>()
+let visitChart: echarts.ECharts | null = null
+let pageChart: echarts.ECharts | null = null
+
 async function fetchStats() {
   try {
-    const response = await api.get('/visits/stats')
-    stats.value = response.data.stats
-    dailyStats.value = response.data.daily
-    topPages.value = response.data.topPages
+    const response = await api.visits.getVisitStats()
+    stats.value = response.data.data.stats
+    dailyStats.value = response.data.data.daily
+    topPages.value = response.data.data.topPages
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to fetch stats'
+    error.value = err.response?.data?.message || 'Failed to fetch stats'
   }
 }
 
 async function fetchVisits() {
   try {
-    const response = await api.get('/visits?limit=50')
-    visits.value = response.data.visits
+    const response = await api.visits.getVisits({ limit: 50 })
+    visits.value = response.data.data.visits
   } catch (err: any) {
-    error.value = err.response?.data?.error || 'Failed to fetch visits'
+    error.value = err.response?.data?.message || 'Failed to fetch visits'
   }
 }
 
@@ -61,402 +60,444 @@ function getBrowserName(userAgent: string) {
   return 'Other'
 }
 
+function initVisitChart() {
+  if (!visitChartRef.value) return
+
+  visitChart = echarts.init(visitChartRef.value)
+
+  const dates = dailyStats.value.map(d => d.date)
+  const counts = dailyStats.value.map(d => d.count)
+
+  const option = {
+    tooltip: {
+      trigger: 'axis',
+      axisPointer: {
+        type: 'shadow'
+      }
+    },
+    grid: {
+      left: '3%',
+      right: '4%',
+      bottom: '3%',
+      containLabel: true
+    },
+    xAxis: {
+      type: 'category',
+      data: dates,
+      axisLabel: {
+        rotate: 45,
+        fontSize: 11
+      }
+    },
+    yAxis: {
+      type: 'value'
+    },
+    series: [
+      {
+        name: '访问量',
+        type: 'bar',
+        data: counts,
+        itemStyle: {
+          color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
+            { offset: 0, color: '#667eea' },
+            { offset: 1, color: '#764ba2' }
+          ])
+        },
+        barWidth: '60%'
+      }
+    ]
+  }
+
+  visitChart.setOption(option)
+}
+
+function initPageChart() {
+  if (!pageChartRef.value) return
+
+  pageChart = echarts.init(pageChartRef.value)
+
+  const pages = topPages.value.slice(0, 5).map(p => p.page_url || '首页')
+  const counts = topPages.value.slice(0, 5).map(p => p.count)
+
+  const option = {
+    tooltip: {
+      trigger: 'item'
+    },
+    legend: {
+      orient: 'vertical',
+      left: 'left'
+    },
+    series: [
+      {
+        name: '页面访问',
+        type: 'pie',
+        radius: ['40%', '70%'],
+        avoidLabelOverlap: false,
+        itemStyle: {
+          borderRadius: 10,
+          borderColor: '#fff',
+          borderWidth: 2
+        },
+        label: {
+          show: false,
+          position: 'center'
+        },
+        emphasis: {
+          label: {
+            show: true,
+            fontSize: 16,
+            fontWeight: 'bold'
+          }
+        },
+        labelLine: {
+          show: false
+        },
+        data: pages.map((page, index) => ({
+          value: counts[index],
+          name: page
+        }))
+      }
+    ]
+  }
+
+  pageChart.setOption(option)
+}
+
+function handleResize() {
+  visitChart?.resize()
+  pageChart?.resize()
+}
+
 onMounted(async () => {
   loading.value = true
   await Promise.all([fetchStats(), fetchVisits()])
   loading.value = false
+
+  await nextTick()
+  initVisitChart()
+  initPageChart()
+
+  window.addEventListener('resize', handleResize)
 })
 </script>
 
 <template>
   <div class="visits-page">
-    <div v-if="loading" class="loading">加载中...</div>
-    
-    <div v-else-if="error" class="error">{{ error }}</div>
-    
+    <el-empty v-if="loading" description="加载中...">
+      <el-icon class="is-loading" :size="32">
+        <Loading />
+      </el-icon>
+    </el-empty>
+
+    <el-empty v-else-if="!canViewVisits" description="您没有权限访问此页面">
+      <el-icon :size="48" color="#909399">
+        <Lock />
+      </el-icon>
+      <template #description>
+        <p>您没有权限访问此页面</p>
+        <p class="permission-hint">需要权限: visits:view</p>
+      </template>
+    </el-empty>
+
+    <el-empty v-else-if="error" description="加载失败">
+      <el-button type="primary" @click="fetchStats">重试</el-button>
+    </el-empty>
+
     <div v-else class="visits-content">
       <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-icon">📊</div>
-          <div class="stat-info">
-            <div class="stat-label">总访问量</div>
-            <div class="stat-value">{{ stats.total }}</div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">📈</div>
-          <div class="stat-info">
-            <div class="stat-label">最近30天</div>
-            <div class="stat-value">{{ stats.recent }}</div>
-          </div>
-        </div>
-        
-        <div class="stat-card">
-          <div class="stat-icon">👥</div>
-          <div class="stat-info">
-            <div class="stat-label">独立访客</div>
-            <div class="stat-value">{{ stats.unique }}</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="charts-section">
-        <div class="chart-card">
-          <h3>每日访问量</h3>
-          <div class="daily-chart">
-            <div
-              v-for="day in dailyStats.slice(0, 14)"
-              :key="day.date"
-              class="chart-bar"
-              :style="{ height: `${(day.count / Math.max(...dailyStats.map(d => d.count))) * 100}%` }"
-            >
-              <div class="bar-tooltip">
-                <div class="tooltip-date">{{ day.date }}</div>
-                <div class="tooltip-count">{{ day.count }} 次</div>
-              </div>
+        <div class="stat-card" v-for="(stat, index) in statCards" :key="index">
+          <div class="stat-content">
+            <div class="stat-icon" :class="`stat-icon-${index}`">
+              <el-icon :size="28" color="white">
+                <DataLine v-if="index === 0" />
+                <TrendCharts v-else-if="index === 1" />
+                <User v-else />
+              </el-icon>
             </div>
-          </div>
-        </div>
-        
-        <div class="chart-card">
-          <h3>热门页面</h3>
-          <div class="top-pages-list">
-            <div
-              v-for="(page, index) in topPages.slice(0, 5)"
-              :key="index"
-              class="top-page-item"
-            >
-              <div class="page-rank">{{ index + 1 }}</div>
-              <div class="page-info">
-                <div class="page-url">{{ page.page_url || '首页' }}</div>
-                <div class="page-count">{{ page.count }} 次访问</div>
-              </div>
+            <div class="stat-info">
+              <p class="stat-label">{{ stat.label }}</p>
+              <p class="stat-value">{{ stat.value }}</p>
             </div>
           </div>
         </div>
       </div>
-      
-      <div class="visits-table-section">
-        <h3>最近访问记录</h3>
-        <div class="table-container">
-          <table class="visits-table">
-            <thead>
-              <tr>
-                <th>时间</th>
-                <th>IP地址</th>
-                <th>浏览器</th>
-                <th>页面</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="visit in visits" :key="visit.id">
-                <td>{{ formatDate(visit.visit_date) }}</td>
-                <td>{{ visit.ip_address || '-' }}</td>
-                <td>{{ getBrowserName(visit.user_agent) }}</td>
-                <td>{{ visit.page_url || '首页' }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+
+      <div class="charts-grid">
+        <el-card class="chart-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>每日访问量</span>
+            </div>
+          </template>
+          <div ref="visitChartRef" class="chart-container"></div>
+        </el-card>
+
+        <el-card class="chart-card" shadow="hover">
+          <template #header>
+            <div class="card-header">
+              <span>热门页面</span>
+            </div>
+          </template>
+          <div ref="pageChartRef" class="chart-container"></div>
+        </el-card>
       </div>
+
+      <el-card class="table-card" shadow="hover">
+        <template #header>
+          <div class="card-header">
+            <span>最近访问记录</span>
+          </div>
+        </template>
+        <div class="table-wrapper">
+          <el-table :data="visits" stripe style="width: 100%">
+            <el-table-column prop="visit_date" label="时间" width="180">
+              <template #default="{ row }">
+                {{ formatDate(row.visit_date) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="ip_address" label="IP地址" width="140">
+              <template #default="{ row }">
+                {{ row.ip_address || '-' }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="user_agent" label="浏览器" width="120">
+              <template #default="{ row }">
+                {{ getBrowserName(row.user_agent) }}
+              </template>
+            </el-table-column>
+            <el-table-column prop="page_url" label="页面">
+              <template #default="{ row }">
+                {{ row.page_url || '首页' }}
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+      </el-card>
     </div>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
+@use '../styles/variables.scss' as *;
+
 .visits-page {
-  max-width: 1200px;
+  padding: $spacing-lg;
+  padding-bottom: calc($spacing-lg + $mobile-nav-height);
+  min-height: 100vh;
+  background: $background-base;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+    padding-bottom: calc($mobile-spacing-lg + $mobile-nav-height);
+  }
+}
+
+.visits-content {
+  max-width: 1400px;
   margin: 0 auto;
-}
-
-.loading, .error {
-  text-align: center;
-  padding: 60px 20px;
-  font-size: 18px;
-  color: #666;
-}
-
-.error {
-  color: #ff4757;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-xl;
+
+  @media (max-width: $breakpoint-sm) {
+    grid-template-columns: 1fr;
+    gap: $mobile-spacing-md;
+    margin-bottom: $mobile-spacing-lg;
+  }
 }
 
 .stat-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
+  background: $background-white;
+  border-radius: $border-radius-large;
+  box-shadow: $box-shadow-base;
+  padding: $spacing-lg;
+  transition: $transition-base;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $mobile-spacing-md;
+    border-radius: $mobile-border-radius-base;
+    box-shadow: $mobile-box-shadow-base;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $box-shadow-dark;
+  }
+}
+
+.stat-content {
   display: flex;
   align-items: center;
-  gap: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  gap: $spacing-md;
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $mobile-spacing-sm;
+  }
 }
 
 .stat-icon {
-  width: 60px;
-  height: 60px;
-  border-radius: 12px;
+  width: 56px;
+  height: 56px;
+  border-radius: $border-radius-base;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  flex-shrink: 0;
+
+  @media (max-width: $breakpoint-sm) {
+    width: 48px;
+    height: 48px;
+  }
+
+  &.stat-icon-1 {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  }
+
+  &.stat-icon-2 {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
 }
 
 .stat-info {
   flex: 1;
+  min-width: 0;
+
+  .stat-label {
+    font-size: $font-size-small;
+    color: $text-color-secondary;
+    margin: 0 0 $spacing-xs 0;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $font-size-extra-small;
+    }
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: $text-color-primary;
+    margin: 0;
+    line-height: 1.2;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: 24px;
+    }
+  }
 }
 
-.stat-label {
-  font-size: 14px;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.stat-value {
-  font-size: 32px;
-  font-weight: 700;
-  color: #333;
-}
-
-.charts-section {
+.charts-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-  gap: 20px;
-  margin-bottom: 32px;
+  grid-template-columns: 2fr 1fr;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-xl;
+
+  @media (max-width: $breakpoint-lg) {
+    grid-template-columns: 1fr;
+  }
+
+  @media (max-width: $breakpoint-sm) {
+    gap: $mobile-spacing-md;
+    margin-bottom: $mobile-spacing-lg;
+  }
 }
 
 .chart-card {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.chart-card h3 {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 20px 0;
-}
-
-.daily-chart {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
-  height: 200px;
-  padding-top: 20px;
-}
-
-.chart-bar {
-  flex: 1;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 6px 6px 0 0;
-  min-height: 20px;
-  position: relative;
-  cursor: pointer;
-  transition: transform 0.2s;
-}
-
-.chart-bar:hover {
-  transform: scaleY(1.05);
-}
-
-.bar-tooltip {
-  position: absolute;
-  bottom: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #333;
-  color: white;
-  padding: 8px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  white-space: nowrap;
-  opacity: 0;
-  visibility: hidden;
-  transition: all 0.2s;
-  margin-bottom: 8px;
-  z-index: 10;
-}
-
-.chart-bar:hover .bar-tooltip {
-  opacity: 1;
-  visibility: visible;
-}
-
-.tooltip-date {
-  margin-bottom: 4px;
-}
-
-.tooltip-count {
-  font-weight: 600;
-}
-
-.top-pages-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.top-page-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: #f5f7fa;
-  border-radius: 10px;
-}
-
-.page-rank {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 14px;
-}
-
-.page-info {
-  flex: 1;
-}
-
-.page-url {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 4px;
+  background: $background-white;
+  border-radius: $border-radius-large;
+  box-shadow: $box-shadow-base;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
-.page-count {
-  font-size: 12px;
-  color: #666;
-}
-
-.visits-table-section {
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.visits-table-section h3 {
-  font-size: 18px;
-  color: #333;
-  margin: 0 0 20px 0;
-}
-
-.table-container {
-  overflow-x: auto;
-}
-
-.visits-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.visits-table th,
-.visits-table td {
-  padding: 12px 16px;
-  text-align: left;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.visits-table th {
-  font-size: 14px;
-  font-weight: 600;
-  color: #666;
-  background: #f5f7fa;
-}
-
-.visits-table td {
-  font-size: 14px;
-  color: #333;
-}
-
-.visits-table tr:hover {
-  background: #f5f7fa;
-}
-
-@media (max-width: 768px) {
-  .stats-grid {
-    grid-template-columns: 1fr;
+  @media (max-width: $breakpoint-sm) {
+    border-radius: $mobile-border-radius-base;
+    box-shadow: $mobile-box-shadow-base;
   }
-  
-  .charts-section {
-    grid-template-columns: 1fr;
+
+  .card-header {
+    font-size: $font-size-medium;
+    font-weight: 600;
+    color: $text-color-primary;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-medium;
+    }
   }
-  
-  .stat-card {
-    padding: 20px;
-  }
-  
-  .stat-value {
-    font-size: 28px;
-  }
-  
-  .chart-card {
-    padding: 20px;
-  }
-  
-  .daily-chart {
-    height: 150px;
-  }
-  
-  .visits-table-section {
-    padding: 20px;
-  }
-  
-  .visits-table th,
-  .visits-table td {
-    padding: 10px 12px;
-    font-size: 13px;
+
+  .chart-container {
+    height: 350px;
+
+    @media (max-width: $breakpoint-md) {
+      height: 300px;
+    }
+
+    @media (max-width: $breakpoint-sm) {
+      height: 250px;
+    }
   }
 }
 
-@media (max-width: 480px) {
-  .stat-card {
-    padding: 16px;
+.table-card {
+  background: $background-white;
+  border-radius: $border-radius-large;
+  box-shadow: $box-shadow-base;
+  overflow: hidden;
+
+  @media (max-width: $breakpoint-sm) {
+    border-radius: $mobile-border-radius-base;
+    box-shadow: $mobile-box-shadow-base;
   }
-  
-  .stat-icon {
-    width: 48px;
-    height: 48px;
-    font-size: 24px;
+
+  .card-header {
+    font-size: $font-size-medium;
+    font-weight: 600;
+    color: $text-color-primary;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-medium;
+    }
   }
-  
-  .stat-value {
-    font-size: 24px;
+
+  .table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    @media (max-width: $breakpoint-sm) {
+      margin: 0 (-$mobile-spacing-md);
+      padding: 0 $mobile-spacing-md;
+    }
   }
-  
-  .chart-card {
-    padding: 16px;
+
+  :deep(.el-table) {
+    font-size: $font-size-base;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-base;
+    }
+
+    .el-table__header th {
+      background: $background-base;
+      font-weight: 600;
+    }
+
+    .el-table__row {
+      &:hover {
+        background: $background-base;
+      }
+    }
   }
-  
-  .daily-chart {
-    height: 120px;
-    gap: 4px;
-  }
-  
-  .visits-table-section {
-    padding: 16px;
-  }
-  
-  .visits-table th,
-  .visits-table td {
-    padding: 8px;
-    font-size: 12px;
+
+  .permission-hint {
+    font-size: $font-size-small;
+    color: $text-color-secondary;
+    margin-top: $spacing-xs;
+
+    @media (max-width: $breakpoint-sm) {
+      font-size: $font-size-extra-small;
+    }
   }
 }
 </style>
