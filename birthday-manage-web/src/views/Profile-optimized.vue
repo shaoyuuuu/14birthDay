@@ -250,6 +250,8 @@ async function handleLogout() {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .profile-page {
   min-height: 100vh;
   background: $bg-secondary;

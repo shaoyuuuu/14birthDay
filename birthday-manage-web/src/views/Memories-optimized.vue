@@ -377,6 +377,8 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .memories-page {
   max-width: $container-2xl;
   margin: 0 auto;

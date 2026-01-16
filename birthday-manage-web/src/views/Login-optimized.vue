@@ -107,7 +107,7 @@ async function handleLogin() {
 </script>
 
 <style scoped lang="scss">
-// design-tokens.scss 已通过 vite.config.ts 全局注入
+@use "@/styles/design-tokens.scss" as *;
 
 .login-form {
   width: 100%;

@@ -2,7 +2,7 @@
 // Global Styles - 全局样式
 // ============================================
 
-// design-tokens.scss 已通过 vite.config.ts 全局注入
+@use "@/styles/design-tokens.scss" as *;
 
 // 重置和基础样式
 *,

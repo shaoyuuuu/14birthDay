@@ -209,6 +209,8 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .messages-page {
   max-width: $container-xl;
   margin: 0 auto;

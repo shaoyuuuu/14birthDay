@@ -58,7 +58,7 @@ export function useAuth() {
     loading.value = true
     try {
       const response = await authService.updatePassword({ oldPassword, newPassword })
-      authStore.setUser(response.data.data.user)
+      authStore.setUser(response)
       success('密码修改成功')
       return true
     } catch (err: any) {
@@ -73,7 +73,7 @@ export function useAuth() {
     loading.value = true
     try {
       const response = await authService.updateProfile(data)
-      authStore.setUser(response.data.data.user)
+      authStore.setUser(response)
       success('个人信息更新成功')
       return true
     } catch (err: any) {

@@ -54,11 +54,31 @@ export const handleApiError = (error: any): ApiError => {
 
   if (error.response?.data) {
     const { data } = error.response
+    
     if (data.error) {
-      if (data.error.code === 'VALIDATION_ERROR' && data.error.errors) {
+      const errorCode = data.error.code
+      const errorMessage = data.error.message
+      
+      if (errorCode === 'VALIDATION_ERROR' && data.error.errors) {
         return new ValidationError(data.error.errors)
       }
-      return new ApiError(data.error.message, data.error.code, data.error.errors)
+      if (errorCode === 'UNAUTHORIZED') {
+        return new UnauthorizedError(errorMessage)
+      }
+      if (errorCode === 'FORBIDDEN') {
+        return new ForbiddenError(errorMessage)
+      }
+      if (errorCode === 'NOT_FOUND') {
+        return new NotFoundError(errorMessage)
+      }
+      if (errorCode === 'CONFLICT') {
+        return new ConflictError(errorMessage)
+      }
+      return new ApiError(errorMessage || data.message, errorCode, data.error.errors)
+    }
+    
+    if (data.success === false && data.message) {
+      return new ApiError(data.message, 'API_ERROR')
     }
   }
 

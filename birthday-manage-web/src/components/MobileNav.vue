@@ -63,6 +63,8 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .mobile-nav {
   position: fixed;
   bottom: 0;

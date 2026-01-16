@@ -269,6 +269,8 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .visits-page {
   padding: $space-6;
   padding-bottom: calc($space-6 + 60px);

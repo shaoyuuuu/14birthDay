@@ -18,7 +18,7 @@ export function useVisitStats() {
     fetchError.value = null
     try {
       const response = await visitService.getStats()
-      stats.value = response.data?.data || null
+      stats.value = response.data.data?.stats || null
     } catch (err: any) {
       fetchError.value = err.response?.data?.message || '获取统计数据失败'
       showError(err.response?.data?.message || '获取统计数据失败')
@@ -30,8 +30,8 @@ export function useVisitStats() {
   const fetchDailyStats = async (params?: { page?: number; pageSize?: number }) => {
     loading.value = true
     try {
-      const response = await visitService.getDailyStats(params)
-      dailyStats.value = response.data?.data?.list || []
+      const response = await visitService.getStats()
+      dailyStats.value = response.data.data?.daily || []
     } catch (err: any) {
       showError(err.response?.data?.message || '获取每日统计失败')
     } finally {
@@ -42,8 +42,8 @@ export function useVisitStats() {
   const fetchTopPages = async (params?: { page?: number; pageSize?: number }) => {
     loading.value = true
     try {
-      const response = await visitService.getTopPages(params)
-      topPages.value = response.data?.data?.list || []
+      const response = await visitService.getStats()
+      topPages.value = response.data.data?.topPages || []
     } catch (err: any) {
       showError(err.response?.data?.message || '获取热门页面失败')
     } finally {
@@ -55,7 +55,7 @@ export function useVisitStats() {
     loading.value = true
     try {
       const response = await visitService.getRecentVisits(params)
-      recentVisits.value = response.data?.data?.list || []
+      recentVisits.value = response.data.data?.list || []
     } catch (err: any) {
       showError(err.response?.data?.message || '获取最近访问失败')
     } finally {

@@ -16,8 +16,8 @@ export function useMemoryList() {
     fetchError.value = null
     try {
       const response = await memoryService.getMemories(params)
-      memories.value = response.data?.data?.list || []
-      total.value = response.data?.data?.total || 0
+      memories.value = response.data.data?.list || []
+      total.value = response.data.data?.total || 0
     } catch (err: any) {
       fetchError.value = err.response?.data?.message || '获取回忆列表失败'
       showError(err.response?.data?.message || '获取回忆列表失败')

@@ -36,16 +36,16 @@ class HttpClient {
 
     this.instance.interceptors.response.use(
       (response: AxiosResponse<ApiResponse>) => {
-        const { code, message } = response.data
+        const { success, message } = response.data
 
-        if (code === HTTP_STATUS.SUCCESS) {
+        if (success) {
           return response
         } else {
           return Promise.reject({
             response: {
               ...response,
               data: {
-                code,
+                success: false,
                 message,
                 error: message,
               },
@@ -58,9 +58,9 @@ class HttpClient {
 
         if (error.response?.status === HTTP_STATUS.UNAUTHORIZED && !originalRequest._retry) {
           originalRequest._retry = true
-          // 只有当请求不是登录或注册时，才执行页面跳转
           if (!originalRequest.url?.includes('/auth/login') && !originalRequest.url?.includes('/auth/register')) {
             localStorage.removeItem(STORAGE_CONFIG.tokenKey)
+            localStorage.removeItem(STORAGE_CONFIG.userKey)
             window.location.href = '/login'
           }
           return Promise.reject(error)
@@ -73,14 +73,14 @@ class HttpClient {
         }
 
         const errorData = error.response?.data || {}
-        const errorMessage = errorData.message || errorData.error || ERROR_MESSAGES.UNKNOWN_ERROR
+        const errorMessage = errorData.message || errorData.error?.message || ERROR_MESSAGES.UNKNOWN_ERROR
 
         return Promise.reject({
           ...error,
           response: {
             ...error.response,
             data: {
-              code: errorData.code || error.response?.status || HTTP_STATUS.INTERNAL_SERVER_ERROR,
+              success: false,
               message: errorMessage,
               error: errorMessage,
             },

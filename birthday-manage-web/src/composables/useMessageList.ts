@@ -16,8 +16,8 @@ export function useMessageList() {
     fetchError.value = null
     try {
       const response = await messageService.getMessages(params)
-      messages.value = response.data?.data?.list || []
-      total.value = response.data?.data?.total || 0
+      messages.value = response.data.data?.list || []
+      total.value = response.data.data?.total || 0
     } catch (err: any) {
       fetchError.value = err.response?.data?.message || '获取留言列表失败'
       showError(err.response?.data?.message || '获取留言列表失败')

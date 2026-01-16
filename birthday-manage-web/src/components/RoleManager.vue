@@ -45,6 +45,8 @@ function changeRole(role: string) {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .role-manager {
   width: 100%;
   margin: $space-3 0;

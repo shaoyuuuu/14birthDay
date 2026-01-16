@@ -14,14 +14,8 @@ export const useAuthStore = defineStore('auth', () => {
   const hasPermission = (permission: string): boolean => {
     if (!user.value) return false
     if (user.value.role === 'admin') return true
-    
-    const rolePermissions: Record<string, string[]> = {
-      admin: ['*'],
-      editor: ['users:view', 'messages:manage', 'memories:manage', 'visits:view', 'profile:view'],
-      viewer: ['users:view', 'messages:view', 'memories:view', 'visits:view', 'profile:view'],
-    }
-    
-    const permissions = rolePermissions[user.value.role] || []
+
+    const permissions = user.value.permissions || []
     return permissions.includes('*') || permissions.includes(permission)
   }
 
@@ -33,13 +27,13 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       loading.value = true
       const { user: userData, token: authToken } = await authService.login({ username, password })
-      
+
       user.value = userData
       token.value = authToken
-      
+
       localStorage.setItem('token', authToken)
       localStorage.setItem('user', JSON.stringify(userData))
-      
+
       ElMessage.success('登录成功')
       return true
     } catch (error) {
@@ -53,14 +47,18 @@ export const useAuthStore = defineStore('auth', () => {
   const register = async (username: string, email: string, password: string) => {
     try {
       loading.value = true
-      const { user: userData, token: authToken } = await authService.register({ username, email, password })
-      
+      const { user: userData, token: authToken } = await authService.register({
+        username,
+        email,
+        password,
+      })
+
       user.value = userData
       token.value = authToken
-      
+
       localStorage.setItem('token', authToken)
       localStorage.setItem('user', JSON.stringify(userData))
-      
+
       ElMessage.success('注册成功')
       return true
     } catch (error) {
@@ -79,7 +77,10 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       user.value = null
       token.value = null
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
       ElMessage.success('已退出登录')
+      window.location.href = '/login'
     }
   }
 
@@ -97,7 +98,7 @@ export const useAuthStore = defineStore('auth', () => {
   const initializeAuth = () => {
     const savedToken = localStorage.getItem('token')
     const savedUser = localStorage.getItem('user')
-    
+
     if (savedToken && savedUser) {
       token.value = savedToken
       try {

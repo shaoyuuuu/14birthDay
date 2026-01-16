@@ -84,6 +84,7 @@ export const ROUTE_NAMES = {
   MEMORIES: 'Memories',
   PROFILE: 'Profile',
   USERS: 'Users',
+  ROLES: 'Roles',
   NOT_FOUND: 'NotFound',
 } as const
 

@@ -8,27 +8,29 @@ async function authMiddleware(req, res, next) {
 
     if (!token) {
       return res.status(401).json({
-        code: 401,
+        success: false,
         message: '未提供认证令牌',
         data: null,
       })
     }
 
-    // 验证 JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
 
-    // 从数据库中获取用户信息
     const result = await pool.query(
-      `SELECT u.id, u.username, u.email, u.role_id, r.name as role_name
+      `SELECT u.id, u.username, u.email, u.role_id, r.name as role_name,
+              ARRAY_AGG(DISTINCT p.name) FILTER (WHERE p.name IS NOT NULL) as permissions
        FROM admins u
        LEFT JOIN roles r ON u.role_id = r.id
-       WHERE u.id = $1`,
+       LEFT JOIN role_permissions rp ON r.id = rp.role_id
+       LEFT JOIN permissions p ON rp.permission_id = p.id
+       WHERE u.id = $1
+       GROUP BY u.id, u.username, u.email, u.role_id, r.name`,
       [decoded.userId]
     )
 
     if (result.rows.length === 0) {
       return res.status(401).json({
-        code: 401,
+        success: false,
         message: '无效的认证令牌',
         data: null,
       })
@@ -44,7 +46,7 @@ async function authMiddleware(req, res, next) {
   } catch (error) {
     logger.error('Auth middleware error:', error)
     return res.status(401).json({
-      code: 401,
+      success: false,
       message: '认证失败',
       data: null,
     })
@@ -56,7 +58,7 @@ function requirePermission(permissionName) {
     try {
       if (!req.user) {
         return res.status(401).json({
-          code: 401,
+          success: false,
           message: '未认证',
           data: null,
         })
@@ -72,7 +74,7 @@ function requirePermission(permissionName) {
 
       if (result.rows.length === 0) {
         return res.status(403).json({
-          code: 403,
+          success: false,
           message: `缺少权限: ${permissionName}`,
           data: null,
         })
@@ -82,7 +84,7 @@ function requirePermission(permissionName) {
     } catch (error) {
       logger.error('Permission middleware error:', error)
       return res.status(500).json({
-        code: 500,
+        success: false,
         message: '权限检查失败',
         data: null,
       })
@@ -95,7 +97,7 @@ function requireRole(roleName) {
     try {
       if (!req.user) {
         return res.status(401).json({
-          code: 401,
+          success: false,
           message: '未认证',
           data: null,
         })
@@ -103,7 +105,7 @@ function requireRole(roleName) {
 
       if (req.user.role_name !== roleName) {
         return res.status(403).json({
-          code: 403,
+          success: false,
           message: `需要角色: ${roleName}`,
           data: null,
         })
@@ -113,7 +115,7 @@ function requireRole(roleName) {
     } catch (error) {
       logger.error('Role middleware error:', error)
       return res.status(500).json({
-        code: 500,
+        success: false,
         message: '角色检查失败',
         data: null,
       })

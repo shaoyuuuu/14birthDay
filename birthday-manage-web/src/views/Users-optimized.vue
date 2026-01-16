@@ -354,6 +354,8 @@ const customHandleReset = () => {
 </script>
 
 <style scoped lang="scss">
+@use "@/styles/design-tokens.scss" as *;
+
 .users-page {
   max-width: $container-xl;
   margin: 0 auto;

@@ -66,6 +66,12 @@ const router = createRouter({
           component: () => import('@/views/Users-optimized.vue'),
           meta: { permission: 'users:view' },
         },
+        {
+          path: 'roles',
+          name: ROUTE_NAMES.ROLES,
+          component: () => import('@/views/Roles-optimized.vue'),
+          meta: { permission: 'users:view' },
+        },
       ],
     },
     {

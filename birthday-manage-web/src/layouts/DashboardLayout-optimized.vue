@@ -102,6 +102,11 @@ const navItems = computed(() => {
     items.push({ name: 'users', label: '用户管理', path: '/users', icon: User })
   }
 
+  // 只有管理员可以看到角色管理菜单
+  if (authStore.hasPermission('users:manage')) {
+    items.push({ name: 'roles', label: '角色管理', path: '/roles', icon: User })
+  }
+
   if (authStore.hasPermission('profile:view')) {
     items.push({ name: 'profile', label: '我的', path: '/profile', icon: User })
   }
@@ -131,7 +136,7 @@ function handleLogout() {
 </script>
 
 <style scoped lang="scss">
-// design-tokens.scss 已通过 vite.config.ts 全局注入
+@use "@/styles/design-tokens.scss" as *;
 
 .dashboard-layout {
   display: flex;

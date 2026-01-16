@@ -13,6 +13,13 @@ const { swaggerServe, swaggerSetup } = require('./config/swagger')
 const { authController, usersController } = require('./controllers')
 const { authMiddleware } = require('./middleware/auth')
 
+const visitRoutes = require('./routes/visits')
+const messageRoutes = require('./routes/messages')
+const memoryRoutes = require('./routes/memories')
+const userRoutes = require('./routes/user')
+const usersRoutes = require('./routes/users')
+const rolesRoutes = require('./routes/roles')
+
 const app = express()
 
 const limiter = rateLimit({
@@ -48,6 +55,11 @@ app.use(metricsMiddleware)
 
 app.use('/api/auth', authController)
 app.use('/api/users', usersController)
+app.use('/api/roles', rolesRoutes)
+app.use('/api/visits', visitRoutes)
+app.use('/api/messages', messageRoutes)
+app.use('/api/memories', memoryRoutes)
+app.use('/api/user', userRoutes)
 
 if (config.env !== 'production') {
   app.use('/api-docs', swaggerServe, swaggerSetup)

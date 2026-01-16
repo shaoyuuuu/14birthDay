@@ -13,6 +13,7 @@ const { pool } = require('../database/db')
 class AuthService {
   constructor() {
     this.userRepository = new UserRepository(pool)
+    this.pool = pool
   }
 
   async register(userData) {
@@ -40,7 +41,7 @@ class AuthService {
     const token = this.generateToken(newUser)
 
     return {
-      user: this.sanitizeUser(newUser),
+      user: await this.sanitizeUser(newUser),
       token,
     }
   }
@@ -61,7 +62,7 @@ class AuthService {
     const token = this.generateToken(user)
 
     return {
-      user: this.sanitizeUser(user),
+      user: await this.sanitizeUser(user),
       token,
     }
   }
@@ -75,7 +76,7 @@ class AuthService {
         throw new UnauthorizedError('User not found')
       }
 
-      return this.sanitizeUser(user)
+      return await this.sanitizeUser(user)
     } catch (error) {
       throw new UnauthorizedError('Invalid token')
     }
@@ -93,11 +94,21 @@ class AuthService {
     })
   }
 
-  sanitizeUser(user) {
+  async sanitizeUser(user) {
     const { password_hash, role_name, ...sanitized } = user
     if (role_name) {
       sanitized.role = role_name
     }
+
+    const permissionsResult = await this.pool.query(
+      `SELECT p.name
+       FROM permissions p
+       INNER JOIN role_permissions rp ON p.id = rp.permission_id
+       WHERE rp.role_id = $1`,
+      [user.role_id]
+    )
+    sanitized.permissions = permissionsResult.rows.map(row => row.name)
+
     return sanitized
   }
 }

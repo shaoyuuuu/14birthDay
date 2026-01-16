@@ -9,27 +9,32 @@ import type {
 } from '@/types/api'
 
 export const authService = {
-  login(data: LoginRequest) {
-    return httpClient.post<LoginResponse>('/auth/login', data)
+  async login(data: LoginRequest): Promise<LoginResponse> {
+    const response = await httpClient.post<LoginResponse>('/auth/login', data)
+    return response.data.data
   },
 
-  register(data: RegisterRequest) {
-    return httpClient.post<LoginResponse>('/auth/register', data)
+  async register(data: RegisterRequest): Promise<LoginResponse> {
+    const response = await httpClient.post<LoginResponse>('/auth/register', data)
+    return response.data.data
   },
 
-  verify() {
-    return httpClient.get<{ user: User }>('/auth/verify')
+  async verify(): Promise<User> {
+    const response = await httpClient.get<{ user: User }>('/auth/verify')
+    return response.data.data.user
   },
 
-  updatePassword(data: UpdatePasswordRequest) {
-    return httpClient.put<{ user: User }>('/auth/password', data)
+  async updatePassword(data: UpdatePasswordRequest): Promise<User> {
+    const response = await httpClient.put<{ user: User }>('/auth/password', data)
+    return response.data.data.user
   },
 
-  updateProfile(data: UpdateProfileRequest) {
-    return httpClient.put<{ user: User }>('/auth/profile', data)
+  async updateProfile(data: UpdateProfileRequest): Promise<User> {
+    const response = await httpClient.put<{ user: User }>('/auth/profile', data)
+    return response.data.data.user
   },
 
-  logout() {
-    return httpClient.post('/auth/logout')
+  async logout(): Promise<void> {
+    await httpClient.post('/auth/logout')
   },
 }

@@ -31,6 +31,7 @@ export interface User {
   username: string
   email: string
   role: string
+  permissions?: string[]
   created_at: string
   updated_at?: string
 }
