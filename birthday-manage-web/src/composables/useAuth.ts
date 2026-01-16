@@ -13,7 +13,7 @@ export function useAuth() {
     loading.value = true
     try {
       const response = await authService.login({ username, password })
-      const { token, user } = response.data.data
+      const { token, user } = response
       authStore.setToken(token)
       authStore.setUser(user)
       success('登录成功')
@@ -30,7 +30,7 @@ export function useAuth() {
     loading.value = true
     try {
       const response = await authService.register({ username, email, password })
-      const { token, user } = response.data.data
+      const { token, user } = response
       authStore.setToken(token)
       authStore.setUser(user)
       success('注册成功')

@@ -26,18 +26,17 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
-    const { code, message } = response.data
+    const { success } = response.data
 
-    if (code === 200) {
+    if (success) {
       return response
     } else {
       return Promise.reject({
         response: {
           ...response,
           data: {
-            code,
-            message,
-            error: message,
+            ...response.data,
+            error: response.data.message,
           },
         },
       })
@@ -50,14 +49,14 @@ api.interceptors.response.use(
     }
 
     const errorData = error.response?.data || {}
-    const errorMessage = errorData.message || errorData.error || '请求失败'
+    const errorMessage = errorData.error?.message || errorData.message || '请求失败'
 
     return Promise.reject({
       ...error,
       response: {
         ...error.response,
         data: {
-          code: errorData.code || error.response?.status || 500,
+          ...errorData,
           message: errorMessage,
           error: errorMessage,
         },

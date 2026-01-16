@@ -17,7 +17,11 @@ class UserService {
     if (!user) {
       throw new NotFoundError('User not found')
     }
-    return user
+    const { role_name, ...sanitized } = user
+    if (role_name) {
+      sanitized.role = role_name
+    }
+    return sanitized
   }
 
   async createUser(userData, currentUserId) {

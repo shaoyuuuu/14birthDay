@@ -1,7 +1,12 @@
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { UserRepository } = require('../repositories')
-const { NotFoundError, UnauthorizedError, ConflictError, BadRequestError } = require('../utils/errors')
+const {
+  NotFoundError,
+  UnauthorizedError,
+  ConflictError,
+  BadRequestError,
+} = require('../utils/errors')
 const config = require('../config')
 const { pool } = require('../database/db')
 
@@ -65,7 +70,7 @@ class AuthService {
     try {
       const decoded = jwt.verify(token, config.jwt.secret)
       const user = await this.userRepository.findById(decoded.userId)
-      
+
       if (!user) {
         throw new UnauthorizedError('User not found')
       }
@@ -89,7 +94,10 @@ class AuthService {
   }
 
   sanitizeUser(user) {
-    const { password_hash, ...sanitized } = user
+    const { password_hash, role_name, ...sanitized } = user
+    if (role_name) {
+      sanitized.role = role_name
+    }
     return sanitized
   }
 }

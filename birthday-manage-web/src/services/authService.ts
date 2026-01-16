@@ -13,12 +13,18 @@ export const authService = {
   },
 
   async getCurrentUser(): Promise<User> {
-    const response = await apiClient.get<{ user: User }>('/user/profile')
+    const response = await apiClient.get<{ user: User }>('/auth/verify')
     return response.data.user
   },
 
   async logout(): Promise<void> {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    try {
+      await apiClient.post<void>('/auth/logout')
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
   },
 }

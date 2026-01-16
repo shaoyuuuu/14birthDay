@@ -16,7 +16,7 @@ class UserRepository {
 
   async findByUsername(username) {
     const query = `
-      SELECT a.*, r.name as role_name, r.permissions as role_permissions
+      SELECT a.*, r.name as role_name
       FROM admins a
       LEFT JOIN roles r ON a.role_id = r.id
       WHERE a.username = $1
@@ -27,7 +27,7 @@ class UserRepository {
 
   async findByEmail(email) {
     const query = `
-      SELECT a.*, r.name as role_name, r.permissions as role_permissions
+      SELECT a.*, r.name as role_name
       FROM admins a
       LEFT JOIN roles r ON a.role_id = r.id
       WHERE a.email = $1
@@ -51,11 +51,11 @@ class UserRepository {
     let whereConditions = ''
 
     if (keyword) {
-      const condition = ` AND (a.username ILIKE $${paramCount} OR a.email ILIKE $${paramCount})`
+      const condition = ` AND (a.username ILIKE $${paramCount} OR a.email ILIKE $${paramCount + 1})`
       query += condition
       whereConditions += condition
-      queryParams.push(`%${keyword}%`)
-      paramCount++
+      queryParams.push(`%${keyword}%`, `%${keyword}%`)
+      paramCount += 2
     }
 
     if (role) {

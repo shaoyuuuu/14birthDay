@@ -17,8 +17,8 @@ export const useAuthStore = defineStore('auth', () => {
     
     const rolePermissions: Record<string, string[]> = {
       admin: ['*'],
-      editor: ['users:view', 'messages:manage', 'memories:manage'],
-      viewer: ['users:view', 'messages:view', 'memories:view'],
+      editor: ['users:view', 'messages:manage', 'memories:manage', 'visits:view', 'profile:view'],
+      viewer: ['users:view', 'messages:view', 'memories:view', 'visits:view', 'profile:view'],
     }
     
     const permissions = rolePermissions[user.value.role] || []
@@ -79,8 +79,6 @@ export const useAuthStore = defineStore('auth', () => {
     } finally {
       user.value = null
       token.value = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
       ElMessage.success('已退出登录')
     }
   }
@@ -111,6 +109,16 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const setToken = (newToken: string) => {
+    token.value = newToken
+    localStorage.setItem('token', newToken)
+  }
+
+  const setUser = (newUser: User) => {
+    user.value = newUser
+    localStorage.setItem('user', JSON.stringify(newUser))
+  }
+
   return {
     user,
     token,
@@ -125,5 +133,7 @@ export const useAuthStore = defineStore('auth', () => {
     logout,
     fetchCurrentUser,
     initializeAuth,
+    setToken,
+    setUser,
   }
 })

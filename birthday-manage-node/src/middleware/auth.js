@@ -16,14 +16,14 @@ async function authMiddleware(req, res, next) {
 
     // 验证 JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    
+
     // 从数据库中获取用户信息
     const result = await pool.query(
       `SELECT u.id, u.username, u.email, u.role_id, r.name as role_name
        FROM admins u
        LEFT JOIN roles r ON u.role_id = r.id
        WHERE u.id = $1`,
-      [decoded.id]
+      [decoded.userId]
     )
 
     if (result.rows.length === 0) {
@@ -34,7 +34,12 @@ async function authMiddleware(req, res, next) {
       })
     }
 
-    req.user = result.rows[0]
+    const user = result.rows[0]
+    const { role_name, ...sanitized } = user
+    if (role_name) {
+      sanitized.role = role_name
+    }
+    req.user = sanitized
     next()
   } catch (error) {
     logger.error('Auth middleware error:', error)

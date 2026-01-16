@@ -32,7 +32,7 @@ async function handleLogin() {
     if (valid) {
       const success = await login(loginForm.username, loginForm.password)
       if (success) {
-        router.push('/')
+        await router.push('/')
       }
     }
   })
