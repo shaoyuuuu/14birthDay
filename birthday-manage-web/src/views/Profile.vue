@@ -1,12 +1,14 @@
 <template>
   <div class="profile-page">
-    <div v-if="!canViewProfile" class="permission-denied">
-      <el-icon :size="60" color="#c0c4cc">
+    <el-empty v-if="!canViewProfile" description="您没有权限访问此页面">
+      <el-icon :size="48" color="#909399">
         <Lock />
       </el-icon>
-      <p>您没有权限访问此页面</p>
-      <p class="permission-hint">需要权限: profile:view</p>
-    </div>
+      <template #description>
+        <p>您没有权限访问此页面</p>
+        <p class="permission-hint">需要权限: profile:view</p>
+      </template>
+    </el-empty>
 
     <div v-else class="profile-container">
       <div class="profile-header">
@@ -226,7 +228,7 @@ async function handleLogout() {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/variables.scss' as *;
+@use '@/styles/variables.scss' as *;
 
 .profile-page {
   min-height: 100vh;
@@ -239,33 +241,14 @@ async function handleLogout() {
     padding-bottom: calc($mobile-spacing-lg + $mobile-nav-height);
   }
 
-  .permission-denied {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    min-height: 60vh;
-    color: $text-secondary;
+  .permission-hint {
+    font-size: $font-size-small;
+    color: $text-placeholder;
+    margin-top: $spacing-xs;
 
-    p {
-      margin: $spacing-md 0;
-      font-size: $font-size-base;
-
-      @media (max-width: $breakpoint-sm) {
-        margin: $mobile-spacing-md 0;
-        font-size: $mobile-font-size-base;
-      }
-    }
-
-    .permission-hint {
-      font-size: $font-size-small;
-      color: $text-placeholder;
-      margin-top: $spacing-xs;
-
-      @media (max-width: $breakpoint-sm) {
-        font-size: $mobile-font-size-small;
-        margin-top: $mobile-spacing-xs;
-      }
+    @media (max-width: $breakpoint-sm) {
+      font-size: $mobile-font-size-small;
+      margin-top: $mobile-spacing-xs;
     }
   }
 }

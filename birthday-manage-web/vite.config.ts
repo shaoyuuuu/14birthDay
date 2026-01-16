@@ -13,18 +13,20 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
-        additionalData: `@use "@/styles/variables.scss" as *;`,
+        additionalData: `@use "@/styles/design-tokens.scss" as *;`,
       },
     },
   },
   server: {
-    port: 5173,
+    port: 5175,
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        target: 'http://localhost:3080',
         changeOrigin: true,
       },
     },
+    open: true,
+    host: '0.0.0.0',
   },
   build: {
     outDir: 'dist',
@@ -32,7 +34,7 @@ export default defineConfig({
     sourcemap: false,
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
+        manualChunks: id => {
           if (id.includes('node_modules')) {
             if (id.includes('element-plus')) {
               return 'element-plus'

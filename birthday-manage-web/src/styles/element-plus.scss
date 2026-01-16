@@ -1,20 +1,31 @@
 @use 'element-plus/theme-chalk/src/common/var.scss' as * with (
   $colors: (
     'primary': (
-      'base': #409eff,
+      'base': #3b82f6,
     ),
     'success': (
-      'base': #67c23a,
+      'base': #10b981,
     ),
     'warning': (
-      'base': #e6a23c,
+      'base': #f59e0b,
     ),
     'danger': (
-      'base': #f56c6c,
+      'base': #ef4444,
     ),
     'info': (
-      'base': #909399,
+      'base': #64748b,
     ),
+  ),
+  $border-radius: (
+    'base': 8px,
+  ),
+  $font-size: (
+    'extra-large': 20px,
+    'large': 18px,
+    'medium': 16px,
+    'base': 14px,
+    'small': 13px,
+    'extra-small': 12px,
   )
 );
 

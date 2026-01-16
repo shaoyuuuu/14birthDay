@@ -1,5 +1,6 @@
 const { pool } = require('../database/db')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
+const jwt = require('jsonwebtoken')
 
 async function authMiddleware(req, res, next) {
   try {
@@ -13,12 +14,16 @@ async function authMiddleware(req, res, next) {
       })
     }
 
+    // 验证 JWT token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    
+    // 从数据库中获取用户信息
     const result = await pool.query(
       `SELECT u.id, u.username, u.email, u.role_id, r.name as role_name
        FROM admins u
        LEFT JOIN roles r ON u.role_id = r.id
-       WHERE u.token = $1`,
-      [token]
+       WHERE u.id = $1`,
+      [decoded.id]
     )
 
     if (result.rows.length === 0) {
@@ -33,8 +38,8 @@ async function authMiddleware(req, res, next) {
     next()
   } catch (error) {
     logger.error('Auth middleware error:', error)
-    return res.status(500).json({
-      code: 500,
+    return res.status(401).json({
+      code: 401,
       message: '认证失败',
       data: null,
     })

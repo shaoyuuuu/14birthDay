@@ -1,7 +1,7 @@
 const express = require('express')
 const { pool } = require('../database/db')
 const { authMiddleware, requirePermission } = require('../middleware/auth')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const { successResponse, createdResponse, serverErrorResponse } = require('../utils/response')
 
 const router = express.Router()

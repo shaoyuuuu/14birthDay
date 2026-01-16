@@ -2,51 +2,25 @@
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { DataLine, TrendCharts, User, Loading, Lock } from '@element-plus/icons-vue'
 import * as echarts from 'echarts'
-import * as api from '../api'
-import { useAuthStore } from '../stores/auth'
-import type { Visit, VisitStats, DailyStat, TopPage } from '../types/api'
+import { useVisitStats } from '@/composables/useVisitStats'
+import { useAuth } from '@/composables/useAuth'
+import type { DailyStat, TopPage } from '@/types/api'
 
-const authStore = useAuthStore()
+const { stats, dailyStats, topPages, recentVisits, loading, error: fetchError, fetchStats } = useVisitStats()
+const { hasPermission } = useAuth()
 
-const visits = ref<Visit[]>([])
-const stats = ref<VisitStats>({ total: 0, recent: 0, unique: 0 })
-const dailyStats = ref<DailyStat[]>([])
-const topPages = ref<TopPage[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
-
-const canViewVisits = computed(() => authStore.hasPermission('visits:view'))
+const canViewVisits = computed(() => hasPermission('visits:view'))
 
 const statCards = computed(() => [
-  { label: '总访问量', value: stats.value.total },
-  { label: '最近30天', value: stats.value.recent },
-  { label: '独立访客', value: stats.value.unique }
+  { label: '总访问量', value: stats.value?.total || 0 },
+  { label: '最近30天', value: stats.value?.recent || 0 },
+  { label: '独立访客', value: stats.value?.unique || 0 }
 ])
 
 const visitChartRef = ref<HTMLElement>()
 const pageChartRef = ref<HTMLElement>()
 let visitChart: echarts.ECharts | null = null
 let pageChart: echarts.ECharts | null = null
-
-async function fetchStats() {
-  try {
-    const response = await api.visits.getVisitStats()
-    stats.value = response.data.data.stats
-    dailyStats.value = response.data.data.daily
-    topPages.value = response.data.data.topPages
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to fetch stats'
-  }
-}
-
-async function fetchVisits() {
-  try {
-    const response = await api.visits.getVisits({ limit: 50 })
-    visits.value = response.data.data.visits
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to fetch visits'
-  }
-}
 
 function formatDate(dateString: string) {
   return new Date(dateString).toLocaleString('zh-CN')
@@ -65,8 +39,8 @@ function initVisitChart() {
 
   visitChart = echarts.init(visitChartRef.value)
 
-  const dates = dailyStats.value.map(d => d.date)
-  const counts = dailyStats.value.map(d => d.count)
+  const dates = dailyStats.value.map((d: DailyStat) => d.date)
+  const counts = dailyStats.value.map((d: DailyStat) => d.count)
 
   const option = {
     tooltip: {
@@ -116,8 +90,8 @@ function initPageChart() {
 
   pageChart = echarts.init(pageChartRef.value)
 
-  const pages = topPages.value.slice(0, 5).map(p => p.page_url || '首页')
-  const counts = topPages.value.slice(0, 5).map(p => p.count)
+  const pages = (topPages.value || []).slice(0, 5).map((p: TopPage) => p.page_url || '首页')
+  const counts = (topPages.value || []).slice(0, 5).map((p: TopPage) => p.count)
 
   const option = {
     tooltip: {
@@ -152,7 +126,7 @@ function initPageChart() {
         labelLine: {
           show: false
         },
-        data: pages.map((page, index) => ({
+        data: pages.map((page: string, index: number) => ({
           value: counts[index],
           name: page
         }))
@@ -169,10 +143,7 @@ function handleResize() {
 }
 
 onMounted(async () => {
-  loading.value = true
-  await Promise.all([fetchStats(), fetchVisits()])
-  loading.value = false
-
+  await fetchStats()
   await nextTick()
   initVisitChart()
   initPageChart()
@@ -199,7 +170,7 @@ onMounted(async () => {
       </template>
     </el-empty>
 
-    <el-empty v-else-if="error" description="加载失败">
+    <el-empty v-else-if="fetchError" description="加载失败">
       <el-button type="primary" @click="fetchStats">重试</el-button>
     </el-empty>
 
@@ -249,7 +220,7 @@ onMounted(async () => {
           </div>
         </template>
         <div class="table-wrapper">
-          <el-table :data="visits" stripe style="width: 100%">
+          <el-table :data="recentVisits" stripe style="width: 100%">
             <el-table-column prop="visit_date" label="时间" width="180">
               <template #default="{ row }">
                 {{ formatDate(row.visit_date) }}
@@ -278,17 +249,17 @@ onMounted(async () => {
 </template>
 
 <style scoped lang="scss">
-@use '../styles/variables.scss' as *;
+@use '@/styles/variables.scss' as *;
 
 .visits-page {
-  padding: $spacing-lg;
-  padding-bottom: calc($spacing-lg + $mobile-nav-height);
+  padding: 4vw;
+  padding-bottom: calc(4vw + 7vh);
   min-height: 100vh;
   background: $background-base;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
-    padding-bottom: calc($mobile-spacing-lg + $mobile-nav-height);
+  @media (min-width: $breakpoint-sm) {
+    padding: 24px;
+    padding-bottom: 24px;
   }
 }
 
@@ -300,31 +271,29 @@ onMounted(async () => {
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: $spacing-lg;
-  margin-bottom: $spacing-xl;
+  gap: 3vw;
+  margin-bottom: 5vw;
 
-  @media (max-width: $breakpoint-sm) {
-    grid-template-columns: 1fr;
-    gap: $mobile-spacing-md;
-    margin-bottom: $mobile-spacing-lg;
+  @media (min-width: $breakpoint-sm) {
+    gap: 16px;
+    margin-bottom: 24px;
   }
 }
 
 .stat-card {
   background: $background-white;
-  border-radius: $border-radius-large;
+  border-radius: 2vw;
   box-shadow: $box-shadow-base;
-  padding: $spacing-lg;
+  padding: 4vw;
   transition: $transition-base;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
-    border-radius: $mobile-border-radius-base;
-    box-shadow: $mobile-box-shadow-base;
+  @media (min-width: $breakpoint-sm) {
+    border-radius: 12px;
+    padding: 20px;
   }
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-2px);
     box-shadow: $box-shadow-dark;
   }
 }
@@ -332,26 +301,27 @@ onMounted(async () => {
 .stat-content {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
+  gap: 3vw;
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-sm;
+  @media (min-width: $breakpoint-sm) {
+    gap: 16px;
   }
 }
 
 .stat-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: $border-radius-base;
+  width: 12vw;
+  height: 12vw;
+  border-radius: 2vw;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 
-  @media (max-width: $breakpoint-sm) {
-    width: 48px;
-    height: 48px;
+  @media (min-width: $breakpoint-sm) {
+    width: 56px;
+    height: 56px;
+    border-radius: 8px;
   }
 
   &.stat-icon-1 {
@@ -368,24 +338,25 @@ onMounted(async () => {
   min-width: 0;
 
   .stat-label {
-    font-size: $font-size-small;
-    color: $text-color-secondary;
-    margin: 0 0 $spacing-xs 0;
+    font-size: 4vw;
+    color: $text-secondary;
+    margin: 0 0 1vw 0;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $font-size-extra-small;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 14px;
+      margin: 0 0 4px 0;
     }
   }
 
   .stat-value {
-    font-size: 28px;
+    font-size: 6vw;
     font-weight: 700;
-    color: $text-color-primary;
+    color: $text-primary;
     margin: 0;
     line-height: 1.2;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: 24px;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 28px;
     }
   }
 }
@@ -393,71 +364,69 @@ onMounted(async () => {
 .charts-grid {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  gap: $spacing-lg;
-  margin-bottom: $spacing-xl;
+  gap: 3vw;
+  margin-bottom: 5vw;
 
   @media (max-width: $breakpoint-lg) {
     grid-template-columns: 1fr;
   }
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-md;
-    margin-bottom: $mobile-spacing-lg;
+  @media (min-width: $breakpoint-sm) {
+    gap: 16px;
+    margin-bottom: 24px;
   }
 }
 
 .chart-card {
   background: $background-white;
-  border-radius: $border-radius-large;
+  border-radius: 2vw;
   box-shadow: $box-shadow-base;
   overflow: hidden;
 
-  @media (max-width: $breakpoint-sm) {
-    border-radius: $mobile-border-radius-base;
-    box-shadow: $mobile-box-shadow-base;
+  @media (min-width: $breakpoint-sm) {
+    border-radius: 12px;
   }
 
   .card-header {
-    font-size: $font-size-medium;
+    font-size: 4.5vw;
     font-weight: 600;
-    color: $text-color-primary;
+    color: $text-primary;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-medium;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 16px;
     }
   }
 
   .chart-container {
-    height: 350px;
+    height: 50vh;
 
     @media (max-width: $breakpoint-md) {
-      height: 300px;
+      height: 40vh;
     }
 
     @media (max-width: $breakpoint-sm) {
-      height: 250px;
+      height: 35vh;
     }
   }
 }
 
 .table-card {
   background: $background-white;
-  border-radius: $border-radius-large;
+  border-radius: 2vw;
   box-shadow: $box-shadow-base;
   overflow: hidden;
 
-  @media (max-width: $breakpoint-sm) {
-    border-radius: $mobile-border-radius-base;
-    box-shadow: $mobile-box-shadow-base;
+  @media (min-width: $breakpoint-sm) {
+    border-radius: 12px;
   }
 
   .card-header {
-    font-size: $font-size-medium;
+    font-size: 4.5vw;
     font-weight: 600;
-    color: $text-color-primary;
+    color: $text-primary;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-medium;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 16px;
     }
   }
 
@@ -466,16 +435,16 @@ onMounted(async () => {
     -webkit-overflow-scrolling: touch;
 
     @media (max-width: $breakpoint-sm) {
-      margin: 0 (-$mobile-spacing-md);
-      padding: 0 $mobile-spacing-md;
+      margin: 0 -4vw;
+      padding: 0 4vw;
     }
   }
 
   :deep(.el-table) {
-    font-size: $font-size-base;
+    font-size: 4vw;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-base;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 14px;
     }
 
     .el-table__header th {
@@ -491,12 +460,13 @@ onMounted(async () => {
   }
 
   .permission-hint {
-    font-size: $font-size-small;
-    color: $text-color-secondary;
-    margin-top: $spacing-xs;
+    font-size: 3.5vw;
+    color: $text-secondary;
+    margin-top: 1vw;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $font-size-extra-small;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 12px;
+      margin-top: 4px;
     }
   }
 }

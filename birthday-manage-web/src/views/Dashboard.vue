@@ -6,53 +6,55 @@
       <aside class="sidebar" :class="{ active: sidebarOpen }">
         <div class="sidebar-header">
           <div class="logo">
-            <el-icon :size="32" color="#409eff">
+            <el-icon class="logo-icon">
               <DataLine />
             </el-icon>
             <span class="logo-text">生日管理</span>
           </div>
-          <button class="close-btn" @click="toggleSidebar" v-if="isMobile">
-            <el-icon :size="24">
+          <el-button class="close-btn" @click="toggleSidebar" v-if="isMobile" text>
+            <el-icon class="close-icon">
               <Close />
             </el-icon>
-          </button>
+          </el-button>
         </div>
 
-        <nav class="sidebar-nav">
-          <div v-for="item in menuItems" :key="item.name" class="nav-item" :class="{ active: activeTab === item.name }"
-            @click="navigateTo(item.name)">
-            <component :is="item.icon" class="nav-icon" />
-            <span class="nav-label">{{ item.label }}</span>
-          </div>
-        </nav>
+        <el-menu :default-active="activeTab" :collapse="false" :unique-opened="true" class="sidebar-menu"
+          @select="handleMenuSelect" text-color="#606266" active-text-color="#409EFF" background-color="#ffffff">
+          <el-menu-item v-for="item in menuItems" :key="item.name" :index="item.name">
+            <el-icon>
+              <component :is="item.icon" />
+            </el-icon>
+            <span>{{ item.label }}</span>
+          </el-menu-item>
+        </el-menu>
 
         <div class="sidebar-footer">
-          <div class="user-info">
-            <el-icon :size="24">
-              <User />
-            </el-icon>
-            <div class="user-details">
-              <div class="username">{{ authStore.user?.username }}</div>
-              <div class="user-role">{{ userRoleLabel }}</div>
+          <el-card class="user-card" shadow="never">
+            <div class="user-info">
+              <el-avatar :size="40" :icon="User" />
+              <div class="user-details">
+                <div class="username">{{ authStore.user?.username }}</div>
+                <el-tag :type="userRoleTagType" size="small">{{ userRoleLabel }}</el-tag>
+              </div>
             </div>
-          </div>
-          <button class="logout-btn" @click="handleLogout">
-            <el-icon>
-              <SwitchButton />
-            </el-icon>
-            <span>退出</span>
-          </button>
+          </el-card>
+          <el-button class="logout-btn" type="danger" plain @click="handleLogout" :icon="SwitchButton">
+            退出登录
+          </el-button>
         </div>
       </aside>
 
       <main class="main-content">
         <header class="main-header">
-          <button class="menu-btn" @click="toggleSidebar" v-if="isMobile">
-            <el-icon :size="24">
+          <el-button class="menu-btn" @click="toggleSidebar" v-if="isMobile" text>
+            <el-icon class="menu-icon">
               <Menu />
             </el-icon>
-          </button>
-          <h1 class="page-title">{{ currentPageTitle }}</h1>
+          </el-button>
+          <el-breadcrumb separator="/">
+            <el-breadcrumb-item :to="{ path: '/' }">首页</el-breadcrumb-item>
+            <el-breadcrumb-item>{{ currentPageTitle }}</el-breadcrumb-item>
+          </el-breadcrumb>
           <div class="header-actions">
             <el-button circle @click="router.push('/profile')" v-if="authStore.hasPermission('profile:view')">
               <el-icon>
@@ -94,6 +96,12 @@ const userRoleLabel = computed(() => {
   if (authStore.isAdmin) return '管理员'
   if (authStore.isEditor) return '编辑者'
   return '访客'
+})
+
+const userRoleTagType = computed(() => {
+  if (authStore.isAdmin) return 'danger'
+  if (authStore.isEditor) return 'warning'
+  return 'info'
 })
 
 const currentPageTitle = computed(() => {
@@ -142,8 +150,8 @@ async function handleLogout() {
   }
 }
 
-function navigateTo(tabName: string) {
-  router.push({ name: tabName })
+function handleMenuSelect(index: string) {
+  router.push({ name: index })
   if (isMobile.value) {
     sidebarOpen.value = false
   }
@@ -160,7 +168,7 @@ onUnmounted(() => {
 </script>
 
 <style scoped lang="scss">
-@use '../styles/variables.scss' as *;
+@use '@/styles/variables.scss' as *;
 
 .dashboard {
   min-height: 100vh;
@@ -196,7 +204,7 @@ onUnmounted(() => {
 }
 
 .sidebar {
-  width: $mobile-sidebar-width;
+  width: 80vw;
   background: $background-white;
   display: flex;
   flex-direction: column;
@@ -224,49 +232,57 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: $spacing-lg;
+  padding: 4vw;
   border-bottom: 1px solid $border-light;
+  height: 12vh;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    padding: 24px;
+    height: 80px;
   }
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
+  gap: 3vw;
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-sm;
+  @media (min-width: $breakpoint-sm) {
+    gap: 12px;
+  }
+
+  .logo-icon {
+    font-size: 5vw;
+    color: $primary-color;
+    transition: all 0.3s ease;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: 24px;
+    }
   }
 
   .logo-text {
-    font-size: $font-size-large;
+    font-size: 5vw;
     font-weight: 600;
     color: $text-primary;
+    letter-spacing: 0.05vw;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-large;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 18px;
+      letter-spacing: 0.5px;
     }
   }
 }
 
 .close-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: $text-secondary;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-xs;
-  border-radius: $border-radius-base;
-  transition: all 0.3s;
+  padding: 2vw !important;
 
-  &:hover {
-    background: $background-base;
-    color: $text-primary;
+  .close-icon {
+    font-size: 5vw;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: 20px;
+    }
   }
 
   @media (min-width: $breakpoint-sm) {
@@ -274,80 +290,79 @@ onUnmounted(() => {
   }
 }
 
-.sidebar-nav {
+.sidebar-menu {
   flex: 1;
-  padding: $spacing-md;
-  overflow-y: auto;
+  border: none;
+  padding: 2vw 0;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-sm;
-  }
-}
+  :deep(.el-menu-item) {
+    height: 10vh;
+    line-height: 10vh;
+    margin: 1vw 3vw;
+    border-radius: 8px;
+    font-size: 4.5vw;
 
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md;
-  border-radius: $border-radius-base;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: $text-secondary;
-  margin-bottom: $spacing-xs;
+    @media (min-width: $breakpoint-sm) {
+      height: 50px;
+      line-height: 50px;
+      margin: 4px 12px;
+      font-size: 15px;
+    }
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
-    gap: $mobile-spacing-md;
-    margin-bottom: $mobile-spacing-xs;
-    border-radius: $mobile-border-radius-base;
-  }
+    &:hover {
+      background-color: rgba(64, 158, 255, 0.1) !important;
+    }
 
-  &:hover {
-    background: $background-base;
-    color: $primary-color;
-  }
+    &.is-active {
+      background-color: rgba(64, 158, 255, 0.15) !important;
+      font-weight: 500;
+    }
 
-  &.active {
-    background: rgba(64, 158, 255, 0.1);
-    color: $primary-color;
-    font-weight: 500;
-  }
-}
+    .el-icon {
+      font-size: 5vw;
+      margin-right: 3vw;
 
-.nav-icon {
-  font-size: $font-size-medium;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-medium;
-  }
-}
-
-.nav-label {
-  font-size: $font-size-base;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-base;
+      @media (min-width: $breakpoint-sm) {
+        font-size: 20px;
+        margin-right: 12px;
+      }
+    }
   }
 }
 
 .sidebar-footer {
-  padding: $spacing-md;
+  padding: 3vw;
   border-top: 1px solid $border-light;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    padding: 16px;
+  }
+}
+
+.user-card {
+  margin-bottom: 3vw;
+  border: none;
+
+  @media (min-width: $breakpoint-sm) {
+    margin-bottom: 12px;
+  }
+
+  :deep(.el-card__body) {
+    padding: 3.5vw;
+
+    @media (min-width: $breakpoint-sm) {
+      padding: 14px;
+    }
   }
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-md;
+  gap: 3vw;
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-md;
-    margin-bottom: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    gap: 12px;
   }
 }
 
@@ -356,52 +371,29 @@ onUnmounted(() => {
   overflow: hidden;
 
   .username {
-    font-size: $font-size-base;
+    font-size: 4.5vw;
     font-weight: 500;
     color: $text-primary;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-bottom: 1vw;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-base;
-    }
-  }
-
-  .user-role {
-    font-size: $font-size-small;
-    color: $text-secondary;
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-small;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 15px;
+      margin-bottom: 4px;
     }
   }
 }
 
 .logout-btn {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-sm;
-  padding: $spacing-md;
-  background: $background-base;
-  border: 1px solid $border-base;
-  border-radius: $border-radius-base;
-  cursor: pointer;
-  transition: all 0.3s;
-  color: $text-secondary;
+  height: 8vh;
+  font-size: 4.5vw;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
-    gap: $mobile-spacing-sm;
-    border-radius: $mobile-border-radius-base;
-  }
-
-  &:hover {
-    background: $danger-color;
-    border-color: $danger-color;
-    color: $background-white;
+  @media (min-width: $breakpoint-sm) {
+    height: 44px;
+    font-size: 15px;
   }
 }
 
@@ -410,7 +402,7 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   margin-left: 0;
-  padding-bottom: $mobile-nav-height;
+  padding-bottom: 60px;
 
   @media (min-width: $breakpoint-sm) {
     margin-left: 280px;
@@ -421,35 +413,32 @@ onUnmounted(() => {
 .main-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-lg $spacing-xl;
+  gap: 3vw;
+  padding: 4vw 5vw;
   background: $background-white;
   border-bottom: 1px solid $border-light;
   position: sticky;
   top: 0;
   z-index: 100;
+  height: 10vh;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md $mobile-spacing-lg;
-    gap: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    gap: 16px;
+    padding: 20px 32px;
+    height: 70px;
   }
 }
 
 .menu-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: $text-secondary;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-xs;
-  border-radius: $border-radius-base;
-  transition: all 0.3s;
+  padding: 2vw !important;
 
-  &:hover {
-    background: $background-base;
-    color: $text-primary;
+  .menu-icon {
+    font-size: 5vw;
+    transition: all 0.3s ease;
+
+    @media (min-width: $breakpoint-sm) {
+      font-size: 20px;
+    }
   }
 
   @media (min-width: $breakpoint-sm) {
@@ -457,33 +446,21 @@ onUnmounted(() => {
   }
 }
 
-.page-title {
-  flex: 1;
-  font-size: $font-size-large;
-  font-weight: 600;
-  color: $text-primary;
-  margin: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-large;
-  }
-}
-
 .header-actions {
   display: flex;
-  gap: $spacing-sm;
+  gap: 2vw;
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-sm;
+  @media (min-width: $breakpoint-sm) {
+    gap: 8px;
   }
 }
 
 .content-wrapper {
   flex: 1;
-  padding: $spacing-xl;
+  padding: 5vw;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    padding: 32px;
   }
 }
 

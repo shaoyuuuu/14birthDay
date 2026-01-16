@@ -1,6 +1,6 @@
 const dotenv = require('dotenv')
 const { Client } = require('pg')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 
 dotenv.config()
 

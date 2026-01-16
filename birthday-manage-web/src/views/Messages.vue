@@ -1,43 +1,15 @@
 <template>
   <div class="messages-page">
-    <div class="messages-header">
-      <h2 class="page-title">留言管理</h2>
-      <div class="header-actions">
+    <PageHeader title="留言管理">
+      <template #actions>
         <el-input v-model="searchQuery" placeholder="搜索留言" :prefix-icon="Search" clearable class="search-input" />
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="messages-content">
-      <div v-if="!canViewMessages" class="empty-container">
-        <el-icon :size="60" color="#c0c4cc">
-          <Lock />
-        </el-icon>
-        <p>您没有权限访问此页面</p>
-        <p class="permission-hint">需要权限: messages:view</p>
-      </div>
-
-      <div v-else-if="loading" class="loading-container">
-        <el-icon class="is-loading" :size="40">
-          <Loading />
-        </el-icon>
-        <p>加载中...</p>
-      </div>
-
-      <div v-else-if="error" class="error-container">
-        <el-icon :size="40" color="#f56c6c">
-          <Warning />
-        </el-icon>
-        <p>{{ error }}</p>
-        <el-button @click="fetchMessages">重新加载</el-button>
-      </div>
-
-      <div v-else-if="filteredMessages.length === 0" class="empty-container">
-        <el-icon :size="60" color="#c0c4cc">
-          <Message />
-        </el-icon>
-        <p>暂无留言</p>
-      </div>
-
+      <LoadingState v-if="loading" />
+      <ErrorState v-else-if="fetchError" :message="fetchError" @retry="handleFetchMessages" />
+      <EmptyState v-else-if="filteredMessages.length === 0" description="暂无留言" />
       <div v-else class="messages-list">
         <div v-for="message in filteredMessages" :key="message.id" class="message-card" @click="viewMessage(message)">
           <div class="message-header">
@@ -51,7 +23,7 @@
               <p class="message-date">{{ formatDate(message.created_at) }}</p>
             </div>
             <el-dropdown trigger="click" @command="(cmd: string) => handleCommand(cmd, message.id)"
-              v-if="authStore.hasPermission('messages:delete')">
+              v-if="hasPermission('messages:delete')">
               <el-icon class="more-btn">
                 <MoreFilled />
               </el-icon>
@@ -88,8 +60,7 @@
       </div>
       <template #footer>
         <el-button @click="closeDetailDialog">关闭</el-button>
-        <el-button type="danger" @click="confirmDelete(selectedMessage?.id)"
-          v-if="authStore.hasPermission('messages:delete')">
+        <el-button type="danger" @click="confirmDelete(selectedMessage?.id)" v-if="hasPermission('messages:delete')">
           删除
         </el-button>
       </template>
@@ -108,14 +79,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, Loading, Warning, Message, User, MoreFilled, Lock } from '@element-plus/icons-vue'
-import * as api from '../api'
-import type { Message as MessageType } from '../types/api'
-import { useAuthStore } from '../stores/auth'
+import { Search, Message, User, MoreFilled } from '@element-plus/icons-vue'
+import { useMessageList } from '@/composables/useMessageList'
+import { useAuth } from '@/composables/useAuth'
+import { LoadingState, ErrorState, EmptyState, PageHeader } from '@/components/common'
 
-const authStore = useAuthStore()
-
-const canViewMessages = computed(() => authStore.hasPermission('messages:view'))
+const { messages, loading, error: fetchError, fetchMessages, deleteMessage: deleteMessageApi } = useMessageList()
+const { hasPermission } = useAuth()
 
 interface Message {
   id: number
@@ -124,9 +94,6 @@ interface Message {
   created_at: string
 }
 
-const messages = ref<MessageType[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
 const selectedMessage = ref<Message | null>(null)
 const showDetailDialog = ref(false)
 const showDeleteDialog = ref(false)
@@ -134,9 +101,10 @@ const messageToDelete = ref<number | null>(null)
 const searchQuery = ref('')
 
 const filteredMessages = computed(() => {
-  if (!searchQuery.value) return messages.value
+  const msgs = messages.value || []
+  if (!searchQuery.value) return msgs
   const query = searchQuery.value.toLowerCase()
-  return messages.value.filter(
+  return msgs.filter(
     msg =>
       msg.name.toLowerCase().includes(query) ||
       msg.message.toLowerCase().includes(query)
@@ -147,18 +115,8 @@ const dialogWidth = computed(() => {
   return window.innerWidth < 768 ? '90%' : '600px'
 })
 
-async function fetchMessages() {
-  loading.value = true
-  error.value = null
-  try {
-    const response = await api.messages.getMessages()
-    messages.value = response.data.data.messages
-  } catch (err: any) {
-    error.value = err.response?.data?.message || '获取留言失败'
-    ElMessage.error(error.value || '获取留言失败')
-  } finally {
-    loading.value = false
-  }
+async function handleFetchMessages() {
+  await fetchMessages()
 }
 
 function formatDate(dateString: string) {
@@ -193,7 +151,7 @@ async function deleteMessage() {
   if (!messageToDelete.value) return
 
   try {
-    await api.messages.deleteMessage(messageToDelete.value)
+    await deleteMessageApi(messageToDelete.value)
     ElMessage.success('删除成功')
     messages.value = messages.value.filter(m => m.id !== messageToDelete.value)
     showDeleteDialog.value = false
@@ -204,58 +162,22 @@ async function deleteMessage() {
 }
 
 onMounted(() => {
-  fetchMessages()
+  handleFetchMessages()
 })
 </script>
 
 <style scoped lang="scss">
-@use '../styles/variables.scss' as *;
+@use '@/styles/variables.scss' as *;
 
 .messages-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: $spacing-lg;
-  padding-bottom: calc($spacing-lg + $mobile-nav-height);
+  padding: 4vw;
+  padding-bottom: calc(4vw + 7vh);
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
-    padding-bottom: calc($mobile-spacing-lg + $mobile-nav-height);
-  }
-}
-
-.messages-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacing-lg;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-
-  @media (max-width: $breakpoint-sm) {
-    flex-direction: column;
-    align-items: stretch;
-    gap: $mobile-spacing-md;
-    margin-bottom: $mobile-spacing-lg;
-  }
-}
-
-.page-title {
-  font-size: $font-size-large;
-  font-weight: 600;
-  color: $text-primary;
-  margin: 0;
-
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-large;
-  }
-}
-
-.header-actions {
-  display: flex;
-  gap: $spacing-md;
-
-  @media (max-width: $breakpoint-sm) {
-    width: 100%;
+  @media (min-width: $breakpoint-sm) {
+    padding: 24px;
+    padding-bottom: 24px;
   }
 }
 
@@ -268,66 +190,30 @@ onMounted(() => {
 }
 
 .messages-content {
-  min-height: 400px;
-}
-
-.loading-container,
-.error-container,
-.empty-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: $spacing-xl;
-  color: $text-secondary;
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-lg;
-  }
-
-  p {
-    margin: $spacing-md 0;
-    font-size: $font-size-base;
-
-    @media (max-width: $breakpoint-sm) {
-      margin: $mobile-spacing-md 0;
-      font-size: $mobile-font-size-base;
-    }
-  }
-
-  .permission-hint {
-    font-size: $font-size-small;
-    color: $text-placeholder;
-    margin-top: $spacing-xs;
-
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-small;
-      margin-top: $mobile-spacing-xs;
-    }
-  }
+  min-height: 50vh;
 }
 
 .messages-list {
   display: flex;
   flex-direction: column;
-  gap: $spacing-md;
+  gap: 3vw;
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    gap: 16px;
   }
 }
 
 .message-card {
   background: $background-white;
-  border-radius: $border-radius-base;
-  padding: $spacing-lg;
+  border-radius: 2vw;
+  padding: 4vw;
   cursor: pointer;
   transition: all 0.3s;
   border: 1px solid $border-lighter;
 
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-md;
-    border-radius: $mobile-border-radius-base;
+  @media (min-width: $breakpoint-sm) {
+    border-radius: 12px;
+    padding: 20px;
   }
 
   &:hover {
@@ -344,19 +230,19 @@ onMounted(() => {
 .message-header {
   display: flex;
   align-items: center;
-  gap: $spacing-md;
-  margin-bottom: $spacing-md;
+  gap: 3vw;
+  margin-bottom: 3vw;
 
-  @media (max-width: $breakpoint-sm) {
-    gap: $mobile-spacing-md;
-    margin-bottom: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    gap: 16px;
+    margin-bottom: 16px;
   }
 }
 
 .message-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: $border-radius-circle;
+  width: 12vw;
+  height: 12vw;
+  border-radius: 50%;
   background: linear-gradient(135deg, $primary-color 0%, #66b1ff 100%);
   display: flex;
   align-items: center;
@@ -364,9 +250,9 @@ onMounted(() => {
   color: $background-white;
   flex-shrink: 0;
 
-  @media (max-width: $breakpoint-sm) {
-    width: 40px;
-    height: 40px;
+  @media (min-width: $breakpoint-sm) {
+    width: 48px;
+    height: 48px;
   }
 }
 
@@ -376,57 +262,58 @@ onMounted(() => {
 }
 
 .message-name {
-  font-size: $font-size-medium;
+  font-size: 4.5vw;
   color: $text-primary;
-  margin: 0 0 $spacing-xs 0;
+  margin: 0 0 1vw 0;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-medium;
-    margin: 0 0 $mobile-spacing-xs 0;
+  @media (min-width: $breakpoint-sm) {
+    font-size: 16px;
+    margin: 0 0 4px 0;
   }
 }
 
 .message-date {
-  font-size: $font-size-small;
+  font-size: 3.5vw;
   color: $text-secondary;
   margin: 0;
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-small;
+  @media (min-width: $breakpoint-sm) {
+    font-size: 14px;
   }
 }
 
 .more-btn {
   color: $text-secondary;
   cursor: pointer;
-  padding: $spacing-xs;
-  border-radius: $border-radius-base;
+  padding: 1vw;
+  border-radius: 1vw;
   transition: all 0.3s;
+
+  @media (min-width: $breakpoint-sm) {
+    padding: 4px;
+    border-radius: 4px;
+  }
 
   &:hover {
     background: $background-base;
     color: $text-primary;
   }
-
-  @media (max-width: $breakpoint-sm) {
-    padding: $mobile-spacing-xs;
-  }
 }
 
 .message-body {
-  margin-top: $spacing-md;
+  margin-top: 3vw;
 
-  @media (max-width: $breakpoint-sm) {
-    margin-top: $mobile-spacing-md;
+  @media (min-width: $breakpoint-sm) {
+    margin-top: 16px;
   }
 }
 
 .message-preview {
-  font-size: $font-size-base;
+  font-size: 4vw;
   color: $text-regular;
   line-height: 1.6;
   margin: 0;
@@ -435,8 +322,8 @@ onMounted(() => {
   -webkit-box-orient: vertical;
   overflow: hidden;
 
-  @media (max-width: $breakpoint-sm) {
-    font-size: $mobile-font-size-base;
+  @media (min-width: $breakpoint-sm) {
+    font-size: 15px;
     -webkit-line-clamp: 2;
   }
 }
@@ -445,19 +332,19 @@ onMounted(() => {
   .detail-header {
     display: flex;
     align-items: center;
-    gap: $spacing-md;
-    margin-bottom: $spacing-lg;
+    gap: 3vw;
+    margin-bottom: 5vw;
 
-    @media (max-width: $breakpoint-sm) {
-      gap: $mobile-spacing-md;
-      margin-bottom: $mobile-spacing-lg;
+    @media (min-width: $breakpoint-sm) {
+      gap: 16px;
+      margin-bottom: 24px;
     }
   }
 
   .detail-avatar {
-    width: 64px;
-    height: 64px;
-    border-radius: $border-radius-circle;
+    width: 16vw;
+    height: 16vw;
+    border-radius: 50%;
     background: linear-gradient(135deg, $primary-color 0%, #66b1ff 100%);
     display: flex;
     align-items: center;
@@ -465,9 +352,9 @@ onMounted(() => {
     color: $background-white;
     flex-shrink: 0;
 
-    @media (max-width: $breakpoint-sm) {
-      width: 56px;
-      height: 56px;
+    @media (min-width: $breakpoint-sm) {
+      width: 64px;
+      height: 64px;
     }
   }
 
@@ -476,50 +363,50 @@ onMounted(() => {
   }
 
   .detail-name {
-    font-size: $font-size-large;
+    font-size: 5.5vw;
     color: $text-primary;
-    margin: 0 0 $spacing-xs 0;
+    margin: 0 0 1vw 0;
     font-weight: 600;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-large;
-      margin: 0 0 $mobile-spacing-xs 0;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 20px;
+      margin: 0 0 4px 0;
     }
   }
 
   .detail-date {
-    font-size: $font-size-small;
+    font-size: 3.5vw;
     color: $text-secondary;
     margin: 0;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-small;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 14px;
     }
   }
 
   .detail-content {
-    margin-top: $spacing-lg;
+    margin-top: 5vw;
 
-    @media (max-width: $breakpoint-sm) {
-      margin-top: $mobile-spacing-lg;
+    @media (min-width: $breakpoint-sm) {
+      margin-top: 24px;
     }
   }
 
   .detail-message {
-    font-size: $font-size-base;
+    font-size: 4vw;
     color: $text-primary;
     line-height: 1.8;
     margin: 0;
-    padding: $spacing-lg;
+    padding: 4vw;
     background: $background-base;
-    border-radius: $border-radius-base;
+    border-radius: 2vw;
     white-space: pre-wrap;
     word-break: break-word;
 
-    @media (max-width: $breakpoint-sm) {
-      font-size: $mobile-font-size-base;
-      padding: $mobile-spacing-md;
-      border-radius: $mobile-border-radius-base;
+    @media (min-width: $breakpoint-sm) {
+      font-size: 15px;
+      padding: 20px;
+      border-radius: 12px;
     }
   }
 }

@@ -1,47 +1,18 @@
 <template>
   <div class="memories-page">
-    <div class="memories-header">
-      <h2 class="page-title">回忆管理</h2>
-      <div class="header-actions">
+    <PageHeader title="回忆管理">
+      <template #actions>
         <el-input v-model="searchQuery" placeholder="搜索回忆" :prefix-icon="Search" clearable class="search-input" />
-        <el-button type="primary" :icon="Plus" @click="openCreateDialog"
-          v-if="authStore.hasPermission('memories:create')">
+        <el-button type="primary" :icon="Plus" @click="openCreateDialog" v-if="hasPermission('memories:create')">
           添加回忆
         </el-button>
-      </div>
-    </div>
+      </template>
+    </PageHeader>
 
     <div class="memories-content">
-      <div v-if="!canViewMemories" class="empty-container">
-        <el-icon :size="60" color="#c0c4cc">
-          <Lock />
-        </el-icon>
-        <p>您没有权限访问此页面</p>
-        <p class="permission-hint">需要权限: memories:view</p>
-      </div>
-
-      <div v-else-if="loading" class="loading-container">
-        <el-icon class="is-loading" :size="40">
-          <Loading />
-        </el-icon>
-        <p>加载中...</p>
-      </div>
-
-      <div v-else-if="error" class="error-container">
-        <el-icon :size="40" color="#f56c6c">
-          <Warning />
-        </el-icon>
-        <p>{{ error }}</p>
-        <el-button @click="fetchMemories">重新加载</el-button>
-      </div>
-
-      <div v-else-if="filteredMemories.length === 0" class="empty-container">
-        <el-icon :size="60" color="#c0c4cc">
-          <Document />
-        </el-icon>
-        <p>暂无回忆</p>
-      </div>
-
+      <LoadingState v-if="loading" />
+      <ErrorState v-else-if="fetchError" :message="fetchError" @retry="handleFetchMemories" />
+      <EmptyState v-else-if="filteredMemories.length === 0" description="暂无回忆" />
       <div v-else class="memories-grid">
         <div v-for="memory in filteredMemories" :key="memory.id" class="memory-card" @click="viewMemory(memory)">
           <div class="memory-image" v-if="memory.image_url">
@@ -54,11 +25,11 @@
           </div>
           <div class="memory-actions">
             <el-button type="primary" size="small" text @click.stop="editMemory(memory)"
-              v-if="authStore.hasPermission('memories:edit')">
+              v-if="hasPermission('memories:edit')">
               编辑
             </el-button>
             <el-button type="danger" size="small" text @click.stop="confirmDelete(memory.id)"
-              v-if="authStore.hasPermission('memories:delete')">
+              v-if="hasPermission('memories:delete')">
               删除
             </el-button>
           </div>
@@ -109,11 +80,10 @@
       </div>
       <template #footer>
         <el-button @click="closeDetailDialog">关闭</el-button>
-        <el-button type="primary" @click="editMemory(selectedMemory)" v-if="authStore.hasPermission('memories:edit')">
+        <el-button type="primary" @click="editMemory(selectedMemory)" v-if="hasPermission('memories:edit')">
           编辑
         </el-button>
-        <el-button type="danger" @click="confirmDelete(selectedMemory?.id)"
-          v-if="authStore.hasPermission('memories:delete')">
+        <el-button type="danger" @click="confirmDelete(selectedMemory?.id)" v-if="hasPermission('memories:delete')">
           删除
         </el-button>
       </template>
@@ -132,18 +102,15 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Search, Loading, Warning, Document, Plus, Lock } from '@element-plus/icons-vue'
-import * as api from '../api'
-import type { Memory } from '../types/api'
-import { useAuthStore } from '../stores/auth'
+import { Search, Plus } from '@element-plus/icons-vue'
+import { useMemoryList } from '@/composables/useMemoryList'
+import { useAuth } from '@/composables/useAuth'
+import { LoadingState, ErrorState, EmptyState, PageHeader } from '@/components/common'
+import type { Memory } from '@/types/api'
 
-const authStore = useAuthStore()
+const { memories, loading, error: fetchError, fetchMemories, createMemory, updateMemory, deleteMemory: deleteMemoryApi } = useMemoryList()
+const { hasPermission } = useAuth()
 
-const canViewMemories = computed(() => authStore.hasPermission('memories:view'))
-
-const memories = ref<Memory[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
 const selectedMemory = ref<Memory | null>(null)
 const showFormDialog = ref(false)
 const showDetailDialog = ref(false)
@@ -162,9 +129,10 @@ const memoryForm = ref({
 })
 
 const filteredMemories = computed(() => {
-  if (!searchQuery.value) return memories.value
+  const mems = memories.value || []
+  if (!searchQuery.value) return mems
   const query = searchQuery.value.toLowerCase()
-  return memories.value.filter(
+  return mems.filter(
     memory =>
       memory.title.toLowerCase().includes(query) ||
       memory.description.toLowerCase().includes(query)
@@ -175,18 +143,8 @@ const dialogWidth = computed(() => {
   return window.innerWidth < 768 ? '90%' : '600px'
 })
 
-async function fetchMemories() {
-  loading.value = true
-  error.value = null
-  try {
-    const response = await api.memories.getMemories()
-    memories.value = response.data.data.memories
-  } catch (err: any) {
-    error.value = err.response?.data?.message || '获取回忆失败'
-    ElMessage.error(error.value || '获取回忆失败')
-  } finally {
-    loading.value = false
-  }
+async function handleFetchMemories() {
+  await fetchMemories()
 }
 
 function formatDate(dateString: string) {
@@ -251,7 +209,7 @@ async function saveMemory() {
   saving.value = true
   try {
     if (isEditing.value) {
-      await api.memories.updateMemory(memoryForm.value.id, {
+      await updateMemory(memoryForm.value.id, {
         title: memoryForm.value.title,
         description: memoryForm.value.description,
         date: memoryForm.value.date,
@@ -267,7 +225,7 @@ async function saveMemory() {
         }
       }
     } else {
-      const response = await api.memories.createMemory({
+      const response = await createMemory({
         title: memoryForm.value.title,
         description: memoryForm.value.description,
         date: memoryForm.value.date,
@@ -296,7 +254,7 @@ async function deleteMemory() {
   if (!memoryToDelete.value) return
 
   try {
-    await api.memories.deleteMemory(memoryToDelete.value)
+    await deleteMemoryApi(memoryToDelete.value)
     ElMessage.success('删除成功')
     memories.value = memories.value.filter(m => m.id !== memoryToDelete.value)
     showDeleteDialog.value = false
@@ -327,12 +285,12 @@ function handleImageSuccess(response: any) {
 }
 
 onMounted(() => {
-  fetchMemories()
+  handleFetchMemories()
 })
 </script>
 
 <style scoped lang="scss">
-@use '../styles/variables.scss' as *;
+@use '@/styles/variables.scss' as *;
 
 .memories-page {
   max-width: 1400px;

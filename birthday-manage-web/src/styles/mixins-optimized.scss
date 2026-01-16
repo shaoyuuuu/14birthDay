@@ -1,0 +1,167 @@
+// design-tokens.scss 已通过 vite.config.ts 全局注入
+
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin ellipsis($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+@mixin hover-lift {
+  transition: transform $duration-base $ease-in-out, box-shadow $duration-base $ease-in-out;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+@mixin card-style {
+  background: $bg-elevated;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
+  padding: $space-6;
+}
+
+@mixin button-base {
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  border: none;
+  cursor: pointer;
+  font-size: $text-base;
+  transition: all $duration-base $ease-in-out;
+
+  &:hover {
+    opacity: 0.9;
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+@mixin responsive-padding {
+  padding: $space-6;
+
+  @media (max-width: $breakpoint-sm) {
+    padding: $space-4;
+  }
+}
+
+@mixin responsive-margin($property: margin) {
+  #{$property}: $space-6;
+
+  @media (max-width: $breakpoint-sm) {
+    #{$property}: $space-4;
+  }
+}
+
+@mixin responsive-font-size($size) {
+  font-size: $size;
+
+  @media (max-width: $breakpoint-sm) {
+    font-size: calc($size * 0.875);
+  }
+}
+
+@mixin scroll-bar {
+  &::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $color-gray-400;
+    border-radius: $radius-full;
+
+    &:hover {
+      background: $color-gray-500;
+    }
+  }
+
+  &::-webkit-scrollbar-track {
+    background: $bg-secondary;
+  }
+}
+
+@mixin absolute-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@mixin full-screen {
+  width: 100%;
+  height: 100%;
+}
+
+@mixin text-gradient($start-color, $end-color) {
+  background: linear-gradient(135deg, $start-color, $end-color);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@mixin glass-effect {
+  background: $glass-bg;
+  backdrop-filter: blur($glass-blur);
+  -webkit-backdrop-filter: blur($glass-blur);
+  border: 1px solid $glass-border;
+}
+
+@mixin no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+@mixin clearfix {
+  &::after {
+    content: '';
+    display: table;
+    clear: both;
+  }
+}
+
+@mixin aspect-ratio($width, $height) {
+  aspect-ratio: $width / $height;
+}
+
+@mixin truncate-text($max-width) {
+  max-width: $max-width;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin line-clamp($lines) {
+  display: -webkit-box;
+  -webkit-line-clamp: $lines;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

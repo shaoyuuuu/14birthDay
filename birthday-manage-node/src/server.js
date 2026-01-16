@@ -13,6 +13,7 @@ const visitRoutes = require('./routes/visits')
 const messageRoutes = require('./routes/messages')
 const memoryRoutes = require('./routes/memories')
 const userRoutes = require('./routes/user')
+const usersRoutes = require('./routes/users')
 
 dotenv.config()
 
@@ -41,6 +42,7 @@ app.use('/api/visits', visitRoutes)
 app.use('/api/messages', messageRoutes)
 app.use('/api/memories', memoryRoutes)
 app.use('/api/user', userRoutes)
+app.use('/api/users', usersRoutes)
 
 app.get('/api/health', (req, res) => {
   return successResponse(

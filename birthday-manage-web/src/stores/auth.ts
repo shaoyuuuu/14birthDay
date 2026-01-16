@@ -1,108 +1,129 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import * as api from '../api'
-import type { User } from '../types/api'
+import { authService } from '@/services'
+import type { User } from '@/types'
+import { ElMessage } from 'element-plus'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
-  const token = ref<string | null>(localStorage.getItem('token'))
+  const token = ref<string | null>(null)
   const loading = ref(false)
-  const error = ref<string | null>(null)
 
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => !!token.value && !!user.value)
 
-  const userRole = computed(() => user.value?.role || 'viewer')
-
-  const userPermissions = computed(() => user.value?.permissions || [])
-
-  const isAdmin = computed(() => userRole.value === 'admin')
-
-  const isEditor = computed(() => ['admin', 'editor'].includes(userRole.value))
-
-  function hasPermission(permission: string): boolean {
-    if (isAdmin.value) return true
-    return userPermissions.value.includes(permission)
+  const hasPermission = (permission: string): boolean => {
+    if (!user.value) return false
+    if (user.value.role === 'admin') return true
+    
+    const rolePermissions: Record<string, string[]> = {
+      admin: ['*'],
+      editor: ['users:view', 'messages:manage', 'memories:manage'],
+      viewer: ['users:view', 'messages:view', 'memories:view'],
+    }
+    
+    const permissions = rolePermissions[user.value.role] || []
+    return permissions.includes('*') || permissions.includes(permission)
   }
 
-  function hasAnyPermission(permissions: string[]): boolean {
-    if (isAdmin.value) return true
-    return permissions.some(p => userPermissions.value.includes(p))
-  }
+  const canEditUsers = computed(() => hasPermission('users:edit'))
+  const canDeleteUsers = computed(() => hasPermission('users:delete'))
+  const canManageUsers = computed(() => hasPermission('users:manage'))
 
-  function hasAllPermissions(permissions: string[]): boolean {
-    if (isAdmin.value) return true
-    return permissions.every(p => userPermissions.value.includes(p))
-  }
-
-  async function login(username: string, password: string) {
-    loading.value = true
-    error.value = null
+  const login = async (username: string, password: string) => {
     try {
-      const response = await api.auth.login({ username, password })
-      token.value = response.data.data.token
-      user.value = response.data.data.user
-      localStorage.setItem('token', response.data.data.token)
+      loading.value = true
+      const { user: userData, token: authToken } = await authService.login({ username, password })
+      
+      user.value = userData
+      token.value = authToken
+      
+      localStorage.setItem('token', authToken)
+      localStorage.setItem('user', JSON.stringify(userData))
+      
+      ElMessage.success('登录成功')
       return true
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Login failed'
+    } catch (error) {
+      console.error('Login error:', error)
       return false
     } finally {
       loading.value = false
     }
   }
 
-  async function register(username: string, email: string, password: string) {
-    loading.value = true
-    error.value = null
+  const register = async (username: string, email: string, password: string) => {
     try {
-      const response = await api.auth.register({ username, email, password })
-      token.value = response.data.data.token
-      user.value = response.data.data.user
-      localStorage.setItem('token', response.data.data.token)
+      loading.value = true
+      const { user: userData, token: authToken } = await authService.register({ username, email, password })
+      
+      user.value = userData
+      token.value = authToken
+      
+      localStorage.setItem('token', authToken)
+      localStorage.setItem('user', JSON.stringify(userData))
+      
+      ElMessage.success('注册成功')
       return true
-    } catch (err: any) {
-      error.value = err.response?.data?.message || 'Registration failed'
+    } catch (error) {
+      console.error('Register error:', error)
       return false
     } finally {
       loading.value = false
     }
   }
 
-  async function verify() {
-    if (!token.value) return false
-
+  const logout = async () => {
     try {
-      const response = await api.auth.verify()
-      user.value = response.data.data.user
-      return true
-    } catch (err) {
-      logout()
-      return false
+      await authService.logout()
+    } catch (error) {
+      console.error('Logout error:', error)
+    } finally {
+      user.value = null
+      token.value = null
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      ElMessage.success('已退出登录')
     }
   }
 
-  function logout() {
-    user.value = null
-    token.value = null
-    localStorage.removeItem('token')
+  const fetchCurrentUser = async () => {
+    try {
+      const userData = await authService.getCurrentUser()
+      user.value = userData
+      localStorage.setItem('user', JSON.stringify(userData))
+    } catch (error) {
+      console.error('Fetch current user error:', error)
+      await logout()
+    }
+  }
+
+  const initializeAuth = () => {
+    const savedToken = localStorage.getItem('token')
+    const savedUser = localStorage.getItem('user')
+    
+    if (savedToken && savedUser) {
+      token.value = savedToken
+      try {
+        user.value = JSON.parse(savedUser)
+      } catch (error) {
+        console.error('Error parsing saved user:', error)
+        localStorage.removeItem('user')
+      }
+    }
   }
 
   return {
     user,
     token,
     loading,
-    error,
     isAuthenticated,
-    userRole,
-    userPermissions,
-    isAdmin,
-    isEditor,
+    canEditUsers,
+    canDeleteUsers,
+    canManageUsers,
     hasPermission,
-    hasAnyPermission,
-    hasAllPermissions,
     login,
     register,
-    verify,
     logout,
+    fetchCurrentUser,
+    initializeAuth,
   }
 })

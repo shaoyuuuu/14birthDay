@@ -106,7 +106,7 @@ export interface CreateMemoryRequest {
   title: string
   description: string
   date: string
-  image_url: string
+  image_url?: string
 }
 
 export interface UpdateMemoryRequest {

@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken')
 const { pool } = require('../database/db')
 const { authMiddleware, getUserPermissions } = require('../middleware/auth')
 const { registerSchema, loginSchema, validate } = require('../utils/validation')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 const {
   successResponse,
   createdResponse,

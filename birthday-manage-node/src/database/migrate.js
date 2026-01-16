@@ -1,5 +1,6 @@
 const { pool } = require('./db');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
+const { createTables } = require('./migrations');
 
 async function migrate() {
   const client = await pool.connect();
@@ -73,8 +74,10 @@ async function migrate() {
     throw error;
   } finally {
     client.release();
-    await pool.end();
   }
+  
+  // 调用 createTables 函数创建角色和权限相关的表
+  await createTables();
 }
 
 if (require.main === module) {

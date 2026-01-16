@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const { pool } = require('./db');
-const logger = require('../utils/logger');
+const { logger } = require('../utils/logger');
 
 async function seed() {
   const client = await pool.connect();

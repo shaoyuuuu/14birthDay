@@ -1,5 +1,5 @@
 const { pool } = require('../database/db')
-const logger = require('../utils/logger')
+const { logger } = require('../utils/logger')
 
 async function createTables() {
   const client = await pool.connect()
